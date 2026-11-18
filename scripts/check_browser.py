@@ -22,7 +22,9 @@ with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
             page.locator('label[for="__palette_1"]').click()
             assert page.locator("body").get_attribute("data-md-color-scheme") == "slate"
             page.locator("input[data-md-component='search-query']").fill("楽観ロック")
-            page.locator(".md-search-result__item").first.wait_for()
+            page.locator(".md-search-result__item:visible").first.wait_for()
+            page.locator("input[data-md-component='search-query']").fill("音声")
+            page.locator(".md-search-result__item:visible").first.wait_for()
             page.keyboard.press("Escape")
             for lesson in ["lessons/02-boot", "reference/schema", "lessons/07-jobs", "lessons/09-sharing"]:
                 page.goto(base + lesson + ".html")
