@@ -1,6 +1,8 @@
-# 7　一枚分の仕事を、途中からやり直せる形にする
+# ジョブの状態と、手動編集を守る版番号
 
-**到達点**　画像行とジョブ行を別々に追い、同時実行・手動編集・異常終了で守る条件を説明する。第4講と第6講の戻り値を使う。
+[本編に戻る　5　時間と失敗を扱う](../course/time.md)
+
+写真の説明がまだ空でも、説明を作る仕事はすでに進んでいるかもしれません。写真の状態と仕事の状態を別々の列に書いてみると、この時間差が見えます。
 
 ## 待ち時間をどこに置くか
 
@@ -116,22 +118,14 @@ db.close()
 
 最初の出力は `[('annotation', 'processing')]`。例外がwithの外へ抜け、完了状態の変更も戻った。再実行ではcompletedと次段pendingがそろう。本番では画像ID・段階・世代の一意性、条件付きのclaim、予定時刻、試行回数、起動時のprocessing回収を組み合わせる。ファイルや外部API料金はSQLのrollbackの対象外。API成功直後・結果保存直前に落ちれば、DBの二重登録防止だけで外部リクエストの厳密な一回性までは証明できない。
 
-<details markdown="1">
-<summary>Fakeのfinish_jobで未来のretry_at_utcとpendingを指定した。直後のclaimは待つか。</summary>
+### Fakeのfinish_jobで未来のretry_at_utcとpendingを指定した。直後のclaimは待つか。
 
 待たない。finish_jobは値を保存するがclaimの条件はstageとpendingだけ。順番を再現するテストで時刻制御まで証明したことにはならない。
 
-</details>
-
-<details markdown="1">
-<summary>競合でcomplete_annotation_jobが例外になったら、Fakeが自動的にJ1をfailedにするか。</summary>
+### 競合でcomplete_annotation_jobが例外になったら、Fakeが自動的にJ1をfailedにするか。
 
 save_annotationの例外が先に伝わり、後続のcompleted更新や分類enqueueに達しない。自動後始末はない。上位が処理しなければJ1はprocessingに残る。
 
-</details>
-
-次は、得られたカテゴリと文章を、別々の検索条件から引く。
-
 ---
 
-[前へ　6　AI付加](06-ai.md)　·　[次へ　8　分類・検索・ごみ箱](08-album.md)
+[前へ　連写と音声の切り出し](05-capture.md)　·　[次へ　承認付きHTTP共有](09-sharing.md)　·　[概論へ](../index.md)

@@ -1,6 +1,8 @@
-# 8　分類・検索・ごみ箱で、同じ写真の見え方が変わる
+# 検索語・分類・ごみ箱の判定
 
-**到達点**　検索結果を手計算し、写真の非表示・カテゴリ削除・完全削除を区別する。第3講の旧レコード、第7講で作った新レコードを使う。
+[本編に戻る　4　写真に意味を付ける](../course/meaning.md)
+
+一覧から写真が消えたとき、条件に合わなかっただけなのか、ごみ箱へ移したのかで次の操作が変わります。同じ写真をそれぞれの方法で探した結果を比べます。
 
 ## ラベル、用途、検索語を区別する
 
@@ -51,22 +53,14 @@ assert approved_image_path("p1", {"p1"}, [row]) == "private/p1.png"
 
 例えばFakeでは復元時に直接 `replace` を使い、`row_version` や更新時刻を増やさない。また、ごみ箱に所属画像があるカテゴリを削除すると `_write` がactive限定の取得を使うため `NotFoundError` になりうる。複数件の変更中なら先行分だけ進む可能性がある。DB版の同一トランザクションを検証する材料になる。[FakeRepository.delete_category](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L203-L214) [FakeRepository.restore_images](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L227-L234)
 
-<details markdown="1">
-<summary>カテゴリ未設定とotherを両方「その他」と表示した。何が検査できなくなるか。</summary>
+### カテゴリ未設定とotherを両方「その他」と表示した。何が検査できなくなるか。
 
 AI未処理・失敗の写真と、処理済みで「その他」を選んだ写真を区別できない。前者はcategory_id=None、後者はotherを検索条件に使う。
 
-</details>
-
-<details markdown="1">
-<summary>「ＲＣ」「板書」が別々のフィールドにあってもFakeで見つかるか。</summary>
+### 「ＲＣ」「板書」が別々のフィールドにあってもFakeで見つかるか。
 
 見つかる。対象フィールドを先に一つの文字列へ連結し、全語の存在を調べる。旧GUIのフィルタはcategory一致だけなのでこの検索を呼ばない。
 
-</details>
-
-次の章では、検索が所有者の端末内で終わり、承認が初めて通信を許す境界を読む。
-
 ---
 
-[前へ　7　ジョブと競合](07-jobs.md)　·　[次へ　9　承認付き共有](09-sharing.md)
+[前へ　音声・画像とAI付加](06-ai.md)　·　[次へ　連写と音声の切り出し](05-capture.md)　·　[概論へ](../index.md)

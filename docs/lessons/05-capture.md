@@ -1,6 +1,8 @@
-# 5　シャッターの時刻と、保存完了の時刻を分ける
+# シャッター前の音声を切り出す
 
-**到達点**　連写で通知が逆順になっても正しい音声を選び、PCMの何番目の値まで保存すべきか計算する。第2講のイベントと第4講の `CaptureInput` を使う。
+[本編に戻る　5　時間と失敗を扱う](../course/time.md)
+
+音は少しずつ届き、写真の保存が終わったという知らせは後で届きます。どの瞬間の音を残すかを、手で追える4 Hzの例に縮めて見ていきます。
 
 ## 三つの部品をつなぐ前に読む
 
@@ -59,22 +61,14 @@ with wave.open(stream, "rb") as f:
 
 Qt例の `pending` が持つのは撮影先Pathだけ。`saved` は対応を表示して `pop` するところまで。エラーのラムダは表示のみで、保留エントリの掃除まで検証した例ではない。本番契約では録音拒否・音声保存失敗でも、画像が登録できれば `audio_tmp_path=None` で進める。[docs/CONTRACTS.md](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/CONTRACTS.md) [Qtの画像保存シグナル](https://doc.qt.io/qtforpython-6/PySide6/QtMultimedia/QImageCapture.html)
 
-<details markdown="1">
-<summary>保存完了が来た瞬間にsnapshotすれば簡単では？</summary>
+### 保存完了が来た瞬間にsnapshotすれば簡単では？
 
 完了通知が2秒遅れれば窓も2秒ずれ、シャッター後の音が入る。過去の時刻を引数にしても、新入力で既にキューから捨てたサンプルは戻らない。シャッター時に切り出し、要求IDで保持する。
 
-</details>
-
-<details markdown="1">
-<summary>マイクが4 Hzで時刻1と3に各4フレーム届いた。3秒時点の5秒窓の長さと中央の値は？</summary>
+### マイクが4 Hzで時刻1と3に各4フレーム届いた。3秒時点の5秒窓の長さと中央の値は？
 
 最初の開始は0。3秒まで12フレームあり、間の[1,2)の4フレームはゼロ。開始以前の2秒は足さない。
 
-</details>
-
-次は、WAVから得た文字列が画像とどこで合流するかを読む。
-
 ---
 
-[前へ　4　契約とFake](04-contract.md)　·　[次へ　6　AI付加](06-ai.md)
+[前へ　分類と検索](08-album.md)　·　[次へ　ジョブと競合](07-jobs.md)　·　[概論へ](../index.md)

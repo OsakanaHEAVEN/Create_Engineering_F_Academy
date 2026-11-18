@@ -19,8 +19,8 @@
 | NFKC／casefold | 全角英字などを比較可能な形へ寄せる正規化／大小文字照合用の変換 | [検索](../lessons/08-album.md) |
 | Bearer／認可 | 提示した人を識別する秘密のトークン／識別した人に操作を許すかの判定 | [共有](../lessons/09-sharing.md) |
 | multipart | 一つのHTTP本文を複数の名前付き部分に分ける形式 | [2枚の承認](../lessons/09-sharing.md) |
-| commit／branch／PR | 内容のスナップショット／先端を指す名前／変更を取り込む前の比較・議論の単位 | [総合演習](../lessons/11-assessment.md) |
+| commit／branch／PR | 内容のスナップショット／先端を指す名前／変更を取り込む前の比較・議論の単位 | [機能変更の実例](../lessons/11-assessment.md) |
 
 ---
 
-[前へ　ソース読解索引](code.md)　·　[次へ　調査台帳](audit.md)
+[前へ　ソース読解索引](code.md)　·　[次へ　調査台帳](audit.md)　·　[概論へ](../index.md)

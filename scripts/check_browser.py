@@ -16,9 +16,13 @@ with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
             browser = playwright.chromium.launch()
             page = browser.new_page(viewport={"width": 1440, "height": 950}, locale="ja-JP")
             base = f"http://127.0.0.1:{server.server_port}/"
-            page.goto(base + "lessons/07-jobs.html")
-            page.locator("details summary").first.click()
-            assert page.locator("details[open]").count() == 1
+            page.goto(base)
+            assert "概論" in page.locator("article h1").inner_text()
+            for img in page.locator("article img").all():
+                assert img.evaluate("el => el.complete && el.naturalWidth > 0")
+            for chapter in ["写真を覚える", "ボタンから処理へ", "写真に意味を付ける", "時間と失敗を扱う", "人と人の間で渡す"]:
+                page.locator("article a").filter(has_text="次へ").filter(has_text=chapter).click()
+                assert chapter in page.locator("article h1").inner_text()
             page.locator('label[for="__palette_1"]').click()
             assert page.locator("body").get_attribute("data-md-color-scheme") == "slate"
             page.locator("input[data-md-component='search-query']").fill("楽観ロック")
@@ -30,7 +34,8 @@ with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
                 page.goto(base + lesson + ".html")
                 assert page.locator("article img").evaluate("el => el.complete && el.naturalWidth > 0")
             page.set_viewport_size({"width": 390, "height": 844})
-            page.goto(base + "lessons/03-storage.html")
+            page.goto(base)
+            assert "概論" in page.locator("article h1").inner_text()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             page.locator('label.md-header__button[for="__drawer"]').click()
             assert page.locator("#__drawer").is_checked()
@@ -38,4 +43,4 @@ with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
     finally:
         server.shutdown()
         thread.join()
-print("検索・解答・配色・図4枚・モバイルナビを確認しました。")
+print("概論と実画面・全6章の移動・検索・配色・技術図・モバイルナビを確認しました。")

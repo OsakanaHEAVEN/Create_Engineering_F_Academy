@@ -16,7 +16,7 @@ git -C ../CEF-reading diff e7dbd20b3e581878729673e2cd82ea60719336e4 origin/main 
 2. README・CONTRACTS・DATA_SCHEMA・ACCEPTANCE_TESTSを同じSHAで読む。差分で名称が変わったら呼出元、例、試験も探す。新規ブランチだけの実装にはそのブランチのSHAを明記する。
 3. 旧・新のどちらのImageRecordをimportしているか、標本Pを使って状態表と出力を更新する。本文とラボ、図のソースとSVG、索引と用語集を一緒に変更する。
 4. 本体の読解用コピーを新SHAへ切り替え、[実験環境](setup.md)で元pytestと教材ラボを実行する。固定リンクを一括置換する前に、対象定義と行番号を新コードで確認する。
-5. 教材側で `python scripts/check_docs.py`、`python -m mkdocs build --strict` を実行。検索、折りたたみ、前後移動、狭い画面を確認してコミットする。新規章は本文・観測値・演習が揃った時点で目次へ加える。
+5. 教材側で `python scripts/check_docs.py`、`python -m mkdocs build --strict` を実行。概論の図と画面、検索、本編6章の前後移動、狭い画面を確認してコミットする。新しい機能は、どの利用場面を変えるかを概論に反映してから、入力・結果・理由を本編の例に加える。関数別の詳しい読解は実装ノートへ置く。
 
 ## 次の改訂の入口
 
@@ -36,4 +36,4 @@ GitHubのMarkdownはリポジトリの閲覧権限で読める。Actionsはpush�
 
 ---
 
-[前へ　調査台帳](audit.md)
+[前へ　調査台帳](audit.md)　·　[概論へ](../index.md)

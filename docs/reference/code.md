@@ -10,7 +10,7 @@
 | [MainWindow.__init__](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L23-L33) | Qtウィジェット・旧modelsとImageRepository。表示と操作の組立場所 | main→repoと3タブ生成→refresh。付加／共有の`_placeholder`はメッセージを含むQWidget |
 | [MainWindow._classification_tab](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L42-L62) | ボタン・コンボ・リストとレイアウト | 初期化→接続と部品を持つQWidget。`currentData()` は表示ラベルとは別の内部値 |
 | [MainWindow.add_image](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L72-L84) | QFileDialog、Path | クリック→各パス→import_file。ValueError/OSErrorは集約し先頭10件を警告。sqlite3.Errorはこの捕捉対象外 |
-| [MainWindow.delete_category](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L86-L106) | QMessageBox | フィルタ値→件数→確認。全件選択時は中断し、Yes時だけ保存層へ。refreshとcloseEventは[第2講](../lessons/02-boot.md) |
+| [MainWindow.delete_category](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L86-L106) | QMessageBox | フィルタ値→件数→確認。全件選択時は中断し、Yes時だけ保存層へ。refreshとcloseEventは[Qtの起動ノート](../lessons/02-boot.md) |
 
 ## 永続化とデータ型
 
@@ -36,7 +36,7 @@
 | [AudioRingBuffer.snapshot](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/camera/audio_ring.py#L55-L88) | テスト・独立例→array、deque、Lock | 単調時刻から重なるチャンクを拾い(PCMコピー, rate)。push・clearは内部キューを変更。非有限時刻を拒否 |
 | [record_wav](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/audio.py#L7-L25) | 単独関数→sounddevice、wave。依存を必要時にimport | path・seconds・rate→録音を待ちWAVを作りPath。既定16kHz、1〜15秒外を拒否 |
 | [_whisper_model](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/audio.py#L29-L35) | transcribe_wav→遅延import・lru_cache | model_size→CPU int8モデルを最大2種類再利用。transcribe_wavがsegmentsを連結しstr |
-| [_clean_jpeg](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L13-L19) | GeminiVisionProvider→ImageOps、BytesIO | 入力パス→向き補正済みJPEGバイト。元ファイルへ書き戻さない |
+| [_clean_jpeg](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L13-L19) | GeminiVisionProvider→ImageOps、BytesIO | 入力パス→向きを補正したJPEG形式の画像データ。元ファイルへ書き戻さない |
 | [_parse_annotation](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L22-L45) | annotate／テスト→json・contracts | テキスト・transcript・model→検証済みAnnotation。不正はValidationError |
 | [GeminiVisionProvider](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L48-L97) | モジュールCLIまたは明示生成→環境変数・google.genai | consentとmodelを保持。annotateは画像と文字列を送信、応答をparse。DBの保存は呼出側 |
 | [classify_by_rules](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/classification/service.py#L9-L21) | 回帰テスト→旧Category | caption＋transcript→最初に一致した固定キー、それ以外other。通信・保存なし |
@@ -58,4 +58,4 @@
 
 ---
 
-[前へ　実験環境](setup.md)　·　[次へ　用語集](glossary.md)
+[前へ　実行環境](setup.md)　·　[次へ　用語集](glossary.md)　·　[概論へ](../index.md)

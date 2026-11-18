@@ -1,6 +1,8 @@
-# 4　同じ「写真」を表す二つの型と、差し替えの条件
+# 旧・新の写真データと保存担当の代役
 
-**到達点**　実行されるクラスをimport元と生成式から特定し、Fakeで確かめられる性質を説明する。第1講の参照、第3講の実際の保存を使う。
+[本編に戻る　3　ボタンから処理へ](../course/operate.md)
+
+二つのファイルに同じ名前のImageRecordが登場します。どちらの型かで「その他」の意味まで変わるので、呼び出す側が相手に何を頼んでいるかを見てみましょう。
 
 ## 呼び出す側が必要とする形を決める
 
@@ -28,24 +30,16 @@
 | `get_image_path(id)` | 元のPNGのパスを返す | 一時ファイルが消えれば読めない |
 | `enqueue_job` | annotationの辞書エントリが1件増える | DB・スレッド・クラウドの実行は発生しない |
 
-本体の実験は[第7講の実行例](07-jobs.md)。まず `row = repo.register_capture(shot)` までを実行し、`row.stored_relpath` と `repo.get_image_path(row.id)` を両方表示する。文字列が異なる理由を上表で説明しよう。
+本体の実験は[付加と分類を順に呼ぶ実行例](07-jobs.md)。まず `row = repo.register_capture(shot)` までを実行し、`row.stored_relpath` と `repo.get_image_path(row.id)` を両方表示する。文字列が異なる理由を上表で説明しよう。
 
-<details markdown="1">
-<summary>MainWindow の生成式だけを FakeRepository() へ変えたら、同じ画面が動くか。</summary>
+### MainWindow の生成式だけを FakeRepository() へ変えたら、同じ画面が動くか。
 
 初回 refresh は currentData() の None を list_images に渡す。Fakeのlist_imagesはSearchQueryを期待してquery.limitに触れるので失敗する。その先もrecord.categoryとcategory_id、import_fileとimport_imageが異なる。変換層か呼出側の移行が要る。
 
-</details>
-
-<details markdown="1">
-<summary>授業のデモでFakeを使うとき、再起動後にも写真一覧が残ると言えるか。</summary>
+### 授業のデモでFakeを使うとき、再起動後にも写真一覧が残ると言えるか。
 
 検査できるのは同じインスタンス内の登録・検索など。新しいインスタンスは空の辞書で始まる。永続化には別プロセスまたは接続を開き直す試験が要る。
 
-</details>
-
-ここまでで保存を依頼する型を読めた。次は、この入力に渡す画像と音声がいつ確定するかを調べる。
-
 ---
 
-[前へ　保存設計演習　DB移行](../reference/schema.md)　·　[次へ　5　撮影音声と連写](05-capture.md)
+[前へ　Qtの起動と終了](02-boot.md)　·　[次へ　音声・画像とAI付加](06-ai.md)　·　[概論へ](../index.md)

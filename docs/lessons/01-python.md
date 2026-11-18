@@ -1,6 +1,8 @@
-# 1　Pythonはどのファイルから動くか
+# Pythonが入口を見つけるまで
 
-**到達点**　`py -3.12 -m venv` と `python -m imagebox` の二つの `-m` を読み分け、ソースが存在するだけで処理が始まるのかを説明する。前提は、関数を定義して呼び出せること。
+[本編に戻る　3　ボタンから処理へ](../course/operate.md)
+
+画面の起動を追っていて、なぜこのファイルが最初に動くのか気になったら、コマンドの最後の一語に注目してみましょう。
 
 ## コマンドからモジュールへ
 
@@ -59,24 +61,16 @@ assert first.names == ["board.png"] and second.names == []
 
 `@dataclass` はフィールドから初期化メソッドなどを作る。`default_factory=list` は実体を新しく作るたびに空リストを用意する。`CanAppend` は引数に要求する操作を記述した型。型注釈を書いても、自動変換もメソッドの追加も起きない。[契約の章](04-contract.md)で本体の例へ戻る。
 
-## 手を止めて予測する
+## 二つの呼び方を比べる
 
-<details markdown="1">
-<summary>alias = Album() に変えると何が変わるか。どの行が失敗するか。</summary>
+### alias = Album() に変えると何が変わるか。どの行が失敗するか。
 
 三つの名前が別々の実体を指す。record は alias のリストだけを変え、print は `[] [] False` を出す。first.names の検査で AssertionError になる。関数の引数は共有した実体への参照を受け取っていた。
 
-</details>
-
-<details markdown="1">
-<summary>import には成功するのにウィンドウが出ない。故障だろうか。</summary>
+### import には成功するのにウィンドウが出ない。故障だろうか。
 
 `import imagebox` だけなら正常。入口を実行したか、main を単に読み込んだかを先に確かめる。ModuleNotFoundError の場合は使用中の Python と editable install の対象を確認する。
 
-</details>
-
-次は `main()` の4行を、誰が誰を生成し、いつ待つのかに分解する。
-
 ---
 
-[前へ　受講案内](../index.md)　·　[次へ　2　起動とイベント](02-boot.md)
+[前へ　既存DBの移行](../reference/schema.md)　·　[次へ　Qtの起動と終了](02-boot.md)　·　[概論へ](../index.md)

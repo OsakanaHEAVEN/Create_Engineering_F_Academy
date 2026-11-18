@@ -1,10 +1,12 @@
-# 3　板書のPNGが、ファイルとDBの一行になるまで
+# 一枚を取り込み、SQLiteから読み戻す
 
-**到達点**　通常GUIで取り込んだ写真について、元のファイル、管理コピー、メモリ上の値、DB行を区別し、どの障害でどれが残るかを説明する。前提は第2講の `self.repo`。
+[本編に戻る　2　写真を覚える](../course/remember.md)
+
+ファイル選択画面を閉じるところから始めます。選んだ場所、保存したコピー、一覧の文字列を区別すると、同じ写真がコードのどこに現れるか追いやすくなります。
 
 ## 写真と目録に異なる仕事をさせる
 
-本棚の本に相当するのが画像バイト、目録に相当するのが `images` 表である。同名の `board.png` を2回受け取っても、別のUUIDを付けるので別々の管理コピーになる。目録は名前や説明を検索できる。一方、目録を巻き戻しても棚の本は自動的には元に戻らない。SQLiteのトランザクションの境界はDBの内側にある。
+本棚に本を置き、目録には置き場所を書くのと同じように、画像はファイルに保存し、その場所は `images` という表に書きます。同名の `board.png` を2回受け取っても、別のUUIDを付けるので別々の管理コピーになる。目録は名前や説明を検索できる。一方、目録を巻き戻しても棚の本は自動的には元に戻らない。SQLiteのトランザクションの境界はDBの内側にある。
 
 ### ダイアログの文字列からImageRecordへ
 
@@ -65,22 +67,14 @@ with TemporaryDirectory() as tmp:
 
 `with self.conn` は、この接続で開始したトランザクションを正常終了時にコミットし、例外時にロールバックする。接続自体は別途閉じる。コピー後の `save` が例外を出すと `except` が管理コピーを消して再送出する。一方、`copy2` はこのtryの外側であり、プロセス停止にも後始末の機会は保証されない。一括削除は全パスを検査し、DB行を削除・コミットしてから `unlink` する。ここで失敗すれば「一覧にないコピー」が残りうる。[ImageRepository.delete_category](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L118-L132) [Pythonの接続コンテキスト](https://docs.python.org/3.12/library/sqlite3.html#how-to-use-the-connection-context-manager)
 
-<details markdown="1">
-<summary>同じIDの古いレコードAとBを別々に読み、Aでcaptionを保存した直後にBでcategoryを保存すると？</summary>
+### 同じIDの古いレコードAとBを別々に読み、Aでcaptionを保存した直後にBでcategoryを保存すると？
 
 B側にも読込時点のcaptionが入っている。更新句にcaptionもあるのでAの編集が失われうる。後述の契約は列を分け、版番号を照合する。
 
-</details>
-
-<details markdown="1">
-<summary>コピー作成直後の電源断と、SQLiteのINSERT失敗は同じ経路を通るか。</summary>
+### コピー作成直後の電源断と、SQLiteのINSERT失敗は同じ経路を通るか。
 
 INSERT例外ならPythonの補償削除が走りうる。電源断ではexceptを実行できず孤児ファイルが残りうる。新設計には起動時の検出・隔離がある。
 
-</details>
-
-次の章では、この実装が新しい `RepositoryPort` の代わりになる条件を調べる。
-
 ---
 
-[前へ　2　起動とイベント](02-boot.md)　·　[次へ　保存設計演習　DB移行](../reference/schema.md)
+[次へ　既存DBの移行](../reference/schema.md)　·　[概論へ](../index.md)

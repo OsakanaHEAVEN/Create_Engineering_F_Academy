@@ -1,0 +1,8 @@
+digraph Album {
+  graph [rankdir=TB, bgcolor="#f4f8f7", pad=.18, nodesep=.25, ranksep=.26, fontname="Noto Sans CJK JP"];
+  node [shape=box, style="rounded,filled", fillcolor="white", color="#47736f", fontcolor="#193e3b", fontname="Noto Sans CJK JP", fontsize=13, margin=".17,.10"];
+  edge [color="#537873", arrowsize=.7, fontname="Noto Sans CJK JP", fontsize=11];
+  shot [label="葵さんが撮る"]; photo [label="写真を残す"]; words [label="直前の言葉を添える"]; album [label="写真と説明を結び付ける"];
+  later [label="葵さんが後で探す"]; ask [label="蓮さんが文章で頼む"]; select [label="葵さんが候補を選ぶ"]; deliver [label="承認した写真が蓮さんに届く",fillcolor="#dcefe8"];
+  shot -> photo; shot -> words; photo -> album; words -> album; album -> later; album -> select; ask -> select; select -> deliver;
+}

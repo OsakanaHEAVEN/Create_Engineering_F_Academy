@@ -40,7 +40,7 @@ editable installで `src/imagebox` を解決できる。`PYTHONPATH` に本体�
 | [atomic.py](../labs/atomic.py) | 縮小DB | 失敗直後はprocessing、成功後は2行 |
 | [search.py](../labs/search.py) | 旧ローカル部品 | notes、正規化 `rc 板書`、0.25、未承認 |
 | [http_demo.py](../labs/http_demo.py) | 独立FastAPI例 | `200 reader` と `409` |
-| [count_solution.py](../labs/count_solution.py) | 小拡張の解答 | `[2, 1, 0, 1] 101` |
+| [count_solution.py](../labs/count_solution.py) | 件数表示の実装例 | `[2, 1, 0, 1] 101` |
 
 すべての実験を個別プロセスで実行するには `.\.labenv\Scripts\python.exe scripts/run_labs.py`。本体のテストは `Push-Location ../CEF-reading` して、教材側の `.labenv\Scripts\python.exe` をフルパスで指定して `-m pytest -q`、終わったら `Pop-Location`。GUIを自分で操作する場合は次の専用フォルダで起動する。
 
@@ -53,4 +53,4 @@ $env:IMAGEBOX_DATA_DIR = Join-Path $PWD "study-data"
 
 ---
 
-[前へ　11　総合演習](../lessons/11-assessment.md)　·　[次へ　ソース読解索引](code.md)
+[次へ　ソース読解索引](code.md)　·　[概論へ](../index.md)

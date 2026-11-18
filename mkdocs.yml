@@ -1,6 +1,6 @@
 site_name: Create Engineering F 技術講義
 site_url: https://osakanaheaven.github.io/Create_Engineering_F_Academy/
-site_description: 板書写真の実行経路を起動・保存・付加・分類・共有まで読む日本語の技術教科書
+site_description: 写真を覚える・意味を付ける・人に渡す体験から学ぶ、Create Engineering F の日本語講義
 repo_name: 教材リポジトリ
 repo_url: https://github.com/OsakanaHEAVEN/Create_Engineering_F_Academy
 edit_uri: ""
@@ -40,26 +40,29 @@ markdown_extensions:
 extra_javascript: [assets/literal-search.js]
 extra_css: [figures/reading.css]
 nav:
-  - 受講案内: index.md
-  - I　動いているGUIを読む:
-      - 1　Pythonの実行入口: lessons/01-python.md
-      - 2　起動とイベント: lessons/02-boot.md
-      - 3　画像とSQLite: lessons/03-storage.md
-      - 保存設計演習　DB移行: reference/schema.md
-  - II　部品間の約束を読む:
-      - 4　契約とFake: lessons/04-contract.md
-      - 5　撮影音声と連写: lessons/05-capture.md
-      - 6　AI付加: lessons/06-ai.md
-  - III　複数の処理をつなぐ:
-      - 7　ジョブと競合: lessons/07-jobs.md
-      - 8　分類・検索・ごみ箱: lessons/08-album.md
-      - 9　承認付き共有: lessons/09-sharing.md
-  - IV　自分で説明し、変える:
-      - 10　統合追跡: lessons/10-trace.md
-      - 11　総合演習: lessons/11-assessment.md
+  - 講義本編:
+      - 1　概論｜写真を撮った後に: index.md
+      - 2　写真を覚える: course/remember.md
+      - 3　ボタンから処理へ: course/operate.md
+      - 4　写真に意味を付ける: course/meaning.md
+      - 5　時間と失敗を扱う: course/time.md
+      - 6　人と人の間で渡す: course/share.md
+  - 実装ノート:
+      - 画像ファイルとSQLite: lessons/03-storage.md
+      - 既存DBの移行: reference/schema.md
+      - Pythonの実行入口: lessons/01-python.md
+      - Qtの起動と終了: lessons/02-boot.md
+      - 契約とFake: lessons/04-contract.md
+      - 音声・画像とAI付加: lessons/06-ai.md
+      - 分類と検索: lessons/08-album.md
+      - 連写と音声の切り出し: lessons/05-capture.md
+      - ジョブと競合: lessons/07-jobs.md
+      - 承認付きHTTP共有: lessons/09-sharing.md
+      - 三つの経路の追跡表: lessons/10-trace.md
+      - テストと仕様変更の実例: lessons/11-assessment.md
   - 資料室:
-      - 実験環境: reference/setup.md
+      - 実行環境: reference/setup.md
       - ソース読解索引: reference/code.md
       - 用語集: reference/glossary.md
       - 調査台帳: reference/audit.md
-      - 改訂・公開手順: reference/update.md
+      - 改訂と公開: reference/update.md

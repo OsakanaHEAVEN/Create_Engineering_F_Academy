@@ -8,6 +8,8 @@
 | docs/full-design-audit | [2075cadc605623e159bca6a204df4ef5df2b6964](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/2075cadc605623e159bca6a204df4ef5df2b6964/docs/PROJECT_DESIGN_AUDIT_AND_COMPLETION_PLAN.md#L617) | 監査・契約草案に「追加合意が必要」とある。こちらのAPI案をmainに転記していない |
 | feat/augmentation-yoshimura | [d64db6cbe0271c768e64d7352e21899f565802ef](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/d64db6cbe0271c768e64d7352e21899f565802ef/src/imagebox/augmentation/service.py) | 旧Ollamaへの呼出関数がある。mainの同名ファイルはGeminiVisionProvider |
 
+11月19日の講義改訂時にも元アプリのmainが同じSHAを指すことを確認しました。概論の画面は、この版をQtの画面表示を模擬するモードで起動し、三つの教材用PNGを登録して取得したものです。
+
 ## 機能の判定
 
 「GUI稼働」は通常入口から到達可能、「部品」は明示的に呼べる本体コード、「独立例」はexamplesを別起動、「Fake」は開発用の代替、「設計」は文書または型に示され、対応する完成部品がmainに見当たらないものを指す。外部サービス・実機の成功を静的読解だけで認定しない。
@@ -26,9 +28,9 @@
 
 ## コードを正しいと仮定しないための照合
 
-1. **補償の限界**　旧保存層はコピー後のDB例外を処理するが、強制終了や削除コミット後のunlink失敗にまたがる整合性回復はない。第3講で失敗位置ごとに確認する。
-2. **Fakeの検索順位**　契約にrelevanceがあるがFakeは日時・ID順。カテゴリ削除とtrashが組み合わさる場合、Fakeは対象行を更新できないことがある。第8講で読み解く。
-3. **次段の重複**　Fakeのenqueueは世代一意性を検査せず新しいUUIDを発行する。メソッドの存在は並行時の一意性の証拠にならない。第7講のSQL模型で分離する。
+1. **補償の限界**　旧保存層はコピー後のDB例外を処理するが、強制終了や削除コミット後のunlink失敗にまたがる整合性回復はない。[保存の実装ノート](../lessons/03-storage.md)で失敗位置ごとに追える。
+2. **Fakeの検索順位**　契約にrelevanceがあるがFakeは日時・ID順。カテゴリ削除とtrashが組み合わさる場合、Fakeは対象行を更新できないことがある。[検索の実装ノート](../lessons/08-album.md)で読み解く。
+3. **次段の重複**　Fakeのenqueueは世代一意性を検査せず新しいUUIDを発行する。メソッドの存在は並行時の一意性の証拠にならない。[ジョブの実装ノート](../lessons/07-jobs.md)でSQLの例と比較できる。
 4. **障害の型**　RateLimitedが契約にあってもVision部品のgenerate_content例外をそこに翻訳する処理は見当たらない。実サービスの値と契約上の値の間に処理が必要。
 5. **受入と単体テスト**　ソース同梱35ケースの成功は、C/A/S全48項目の完了数と一致しない。例のcompile、Fake、モデル差し替えを含むからである。
 
@@ -38,4 +40,4 @@
 
 ---
 
-[前へ　用語集](glossary.md)　·　[次へ　改訂・公開手順](update.md)
+[前へ　用語集](glossary.md)　·　[次へ　改訂と公開](update.md)　·　[概論へ](../index.md)
