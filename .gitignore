@@ -1,4 +1,6 @@
 .venv/
+.labenv/
 site/
 __pycache__/
 .pytest_cache/
+study-data/

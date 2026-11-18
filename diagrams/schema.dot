@@ -1,0 +1,8 @@
+digraph G {
+graph [bgcolor="#f3f8f8",rankdir=TB,pad=.20,ranksep=.30,nodesep=.25,fontname="sans-serif",fontsize=13,color="#668f90"];
+node [shape=box,style="rounded,filled",fillcolor="#ffffff",color="#287574",fontcolor="#103d40",fontname="sans-serif",fontsize=13,margin=".14,.09"];
+edge [color="#4b7175",fontname="sans-serif",fontsize=11,fontcolor="#25484b",arrowsize=.7];
+
+subgraph cluster_local {label="所有者のローカルDB（設計）"; category [label="categories"]; photo [label="images"]; jobs [label="jobs"]; settings [label="app_settings"]; category -> photo [label="1 対 多／未分類は NULL"]; photo -> jobs [label="1 対 多"];}
+subgraph cluster_server {label="共有サーバーDB（設計）"; users [label="users"]; requests [label="share_requests"]; files [label="approved_files"]; users -> requests [label="requester・owner"]; requests -> files [label="1 対 多"];}
+}

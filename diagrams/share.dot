@@ -1,0 +1,10 @@
+digraph G {
+graph [bgcolor="#f3f8f8",rankdir=TB,pad=.20,ranksep=.30,nodesep=.25,fontname="sans-serif",fontsize=13,color="#668f90"];
+node [shape=box,style="rounded,filled",fillcolor="#ffffff",color="#287574",fontcolor="#103d40",fontname="sans-serif",fontsize=13,margin=".14,.09"];
+edge [color="#4b7175",fontname="sans-serif",fontsize=11,fontcolor="#25484b",arrowsize=.7];
+
+subgraph cluster_a {label="依頼者 A"; request [label="文章で依頼"]; fetch [label="F1・F2 を個別に取得"];}
+subgraph cluster_s {label="共有サーバー"; pending [label="R を pending で登録"]; verify [label="権限と全ファイルを検証"]; files [label="approved・F1・F2"]; reject [label="失敗なら pending を維持"];}
+subgraph cluster_b {label="所有者 B の端末"; select [label="検索と手動追加"]; approve [label="P・Q を最終承認"];}
+request -> pending -> select; select -> approve -> verify; verify -> files -> fetch; verify -> reject;
+}

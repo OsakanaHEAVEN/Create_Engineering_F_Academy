@@ -1,0 +1,64 @@
+site_name: Create Engineering F 技術講義
+site_url: https://osakanaheaven.github.io/Create_Engineering_F_Academy/
+site_description: 板書写真の実行経路を起動・保存・付加・分類・共有まで読む日本語の技術教科書
+repo_name: 教材リポジトリ
+repo_url: https://github.com/OsakanaHEAVEN/Create_Engineering_F_Academy
+edit_uri: ""
+use_directory_urls: false
+theme:
+  name: material
+  language: ja
+  font: false
+  icon:
+    logo: material/book-open-page-variant-outline
+  features:
+    - navigation.footer
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle: {icon: material/weather-night, name: ダークモードに切り替え}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle: {icon: material/weather-sunny, name: ライトモードに切り替え}
+plugins:
+  - search:
+      lang: [ja, en]
+markdown_extensions:
+  - md_in_html
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+extra_css: [figures/reading.css]
+nav:
+  - 受講案内: index.md
+  - I　動いているGUIを読む:
+      - 1　Pythonの実行入口: lessons/01-python.md
+      - 2　起動とイベント: lessons/02-boot.md
+      - 3　画像とSQLite: lessons/03-storage.md
+      - 保存設計演習　DB移行: reference/schema.md
+  - II　部品間の約束を読む:
+      - 4　契約とFake: lessons/04-contract.md
+      - 5　撮影音声と連写: lessons/05-capture.md
+      - 6　AI付加: lessons/06-ai.md
+  - III　複数の処理をつなぐ:
+      - 7　ジョブと競合: lessons/07-jobs.md
+      - 8　分類・検索・ごみ箱: lessons/08-album.md
+      - 9　承認付き共有: lessons/09-sharing.md
+  - IV　自分で説明し、変える:
+      - 10　統合追跡: lessons/10-trace.md
+      - 11　総合演習: lessons/11-assessment.md
+  - 資料室:
+      - 実験環境: reference/setup.md
+      - ソース読解索引: reference/code.md
+      - 用語集: reference/glossary.md
+      - 調査台帳: reference/audit.md
+      - 改訂・公開手順: reference/update.md

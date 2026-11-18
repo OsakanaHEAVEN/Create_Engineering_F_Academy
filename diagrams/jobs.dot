@@ -1,0 +1,12 @@
+digraph G {
+graph [bgcolor="#f3f8f8",rankdir=TB,pad=.20,ranksep=.30,nodesep=.25,fontname="sans-serif",fontsize=13,color="#668f90"];
+node [shape=box,style="rounded,filled",fillcolor="#ffffff",color="#287574",fontcolor="#103d40",fontname="sans-serif",fontsize=13,margin=".14,.09"];
+edge [color="#4b7175",fontname="sans-serif",fontsize=11,fontcolor="#25484b",arrowsize=.7];
+
+register [label="register_capture"]; pending [label="付加 J1 待機"]; act [label="J1 を claim"];
+compare [label="付加版・編集元を照合",shape=diamond]; conflict [label="ConflictError"];
+done [label="説明保存・J1 完了"]; j2 [label="分類 J2 を登録"];
+result [label="J2 を claim → 分類を確定"];
+register -> pending -> act -> compare;
+compare -> conflict [label="競合"]; compare -> done [label="一致"]; done -> j2 -> result;
+}

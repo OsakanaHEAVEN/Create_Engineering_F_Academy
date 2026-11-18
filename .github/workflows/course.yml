@@ -1,0 +1,52 @@
+name: 教材の検証と配布
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy_pages:
+        description: GitHub Pagesへ公開
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - run: python scripts/check_docs.py
+      - run: python docs/labs/objects.py && python docs/labs/atomic.py && python docs/labs/migration.py
+      - run: python -m mkdocs build --strict
+      - run: python -m pip install playwright && python -m playwright install --with-deps chromium
+      - run: python scripts/check_browser.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: course-html
+          path: site/
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && (inputs.deploy_pages || vars.PUBLISH_PAGES == 'true')
+        with:
+          path: site/
+  deploy:
+    if: github.ref == 'refs/heads/main' && (inputs.deploy_pages || vars.PUBLISH_PAGES == 'true')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - name: 教材を配信
+        id: publish
+        uses: actions/deploy-pages@v4

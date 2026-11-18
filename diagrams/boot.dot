@@ -1,0 +1,12 @@
+digraph G {
+graph [bgcolor="#f3f8f8",rankdir=TB,pad=.20,ranksep=.30,nodesep=.25,fontname="sans-serif",fontsize=13,color="#668f90"];
+node [shape=box,style="rounded,filled",fillcolor="#ffffff",color="#287574",fontcolor="#103d40",fontname="sans-serif",fontsize=13,margin=".14,.09"];
+edge [color="#4b7175",fontname="sans-serif",fontsize=11,fontcolor="#25484b",arrowsize=.7];
+
+entry [label="python -m imagebox"]; main [label="main()"];
+app [label="QApplication"]; win [label="MainWindow"];
+repo [label="ImageRepository"]; ui [label="3タブと初回 refresh"];
+db [label="images.sqlite3"]; loop [label="show → exec"];
+entry -> main; main -> app; main -> win; win -> repo; win -> ui; repo -> db;
+ui -> loop; loop -> ui [label="クリック／選択"];
+}
