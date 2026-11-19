@@ -1,21 +1,19 @@
 # Create Engineering F 技術講義
 
-**[本人限定サイトで概論を読む](https://create-engineering-f-academy.velvetclay32.chatgpt.site)**　・　[GitHubで概論を読む](docs/index.md)
+[技術概論から読む](https://create-engineering-f-academy.velvetclay32.chatgpt.site)　·　[GitHubで読む](docs/index.md)　·　[Pythonファイルの地図](docs/reference/files.md)
 
-板書、バスの時刻表、集合写真。同じアルバムに並ぶ三枚でも、後で何をしたいかは違います。この講義では、写真を撮る人と受け取る人の体験から出発し、そのためにアプリが何を記録し、どんな順番で処理するかを読み解きます。初めて読む方は、インストールせずに概論から進めます。
+画像を一枚取り込むとき、画面から保存関数に渡るのは何でしょう。保存した後、画面に出る記録は誰が読み直すのでしょう。この講義では、元アプリを開いて同じ行をたどれるように、ファイル、関数、実際の引数と戻り値を結び付けて読みます。前提はPythonの関数とクラスの初歩です。第1章から読み始めるのに環境の準備は要りません。
 
-## 本編の読み順
-
-| 章 | この章で見えること |
+| 章 | コードから説明できること |
 |---|---|
-| [1　概論](docs/index.md) | なぜ写真に言葉を添えるのか。完成時の体験と、現在の画面でできること |
-| [2　写真を覚える](docs/course/remember.md) | 同じ名前の写真を二枚取り込んでも、閉じて開き直せる理由 |
-| [3　ボタンから処理へ](docs/course/operate.md) | ウィンドウが入力を待ち、キャンセルと取り込みを処理し分ける仕組み |
-| [4　写真に意味を付ける](docs/course/meaning.md) | 同じ板書でも撮った理由が違うとき、説明・用途・検索が果たす役割 |
-| [5　時間と失敗を扱う](docs/course/time.md) | 連写の完了順が逆になる、AIより先に人が説明を書く、保存途中で止まる場合 |
-| [6　人と人の間で渡す](docs/course/share.md) | 欲しいと頼んだ人、持ち主、サーバーのそれぞれに、いつ何が届くか |
+| [1　技術概論](docs/index.md) | 通常起動の構成。どのオブジェクトが保存担当とDB接続を持つか |
+| [2　起動とイベント](docs/course/operate.md) | mainからQtの通知、ファイル選択、終了処理までの呼び出し |
+| [3　一枚の画像とSQLite](docs/course/remember.md) | Path、ImageRecord、SQLの行、表示文字列の間で値がどう変わるか |
+| [4　データ型と契約](docs/course/meaning.md) | 二つのImageRecord、Protocol、AI応答を検査する関数の入出力 |
+| [5　非同期処理と更新順序](docs/course/time.md) | 撮影要求ID、音声片の終端時刻、ジョブID、版番号の使い分け |
+| [6　検索・共有と変更の影響](docs/course/share.md) | 候補検索と承認の境界、分類キーやタグ型の変更が波及する場所 |
 
-本編は、具体的な入力・結果・理由をその場で読める構成です。コードを一行ずつ追うときは各章の「詳しく読む」から実装ノートへ進めます。手元で再現したい場合にだけ[実行環境](docs/reference/setup.md)を使ってください。実装の所在は[ソース読解索引](docs/reference/code.md)、ブランチと実装状況は[調査台帳](docs/reference/audit.md)にあります。
+ファイルの所在から探すなら[全Pythonファイルの地図](docs/reference/files.md)、呼び出し元と副作用を確認するなら[関数の読解索引](docs/reference/code.md)を開いてください。[調査台帳](docs/reference/audit.md)には、講義の基準コミットと、通常の起動経路、開発用の代替実装、設計段階の機能の判定根拠があります。
 
 ## サイトとして読む
 

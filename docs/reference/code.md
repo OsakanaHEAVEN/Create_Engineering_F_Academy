@@ -58,4 +58,4 @@
 
 ---
 
-[前へ　実行環境](setup.md)　·　[次へ　用語集](glossary.md)　·　[概論へ](../index.md)
+[前へ　Pythonファイルの地図](files.md)　·　[次へ　用語集](glossary.md)　·　[概論へ](../index.md)

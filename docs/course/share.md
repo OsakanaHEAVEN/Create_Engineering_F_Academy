@@ -1,38 +1,36 @@
-# 6　人と人の間で渡す｜「見つかった」から「渡してよい」まで
+# 6　検索・共有と変更の影響｜型の利用先から設計を読む
 
-蓮さんが「先週の充電曲線の板書、グラフの続きもあれば欲しい」と頼みました。葵さんの端末には、回路図とグラフの二枚に加え、同じ授業の日の集合写真もあります。蓮さんに必要なのは板書の二枚です。アルバムをまるごと見せずに、どう届ければよいでしょうか。
+同じ `service.py` でも、`classification/service.py` は説明文と文字起こしを受け取って分類キーを返し、`sharing/service.py` は文章と画像の記録を受け取って共有候補を返します。`augmentation/service.py` の担当は第4章で見た説明の生成です。ファイルを探すときには親フォルダまで読むと、同名のファイルを区別できます。[分類関数](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/classification/service.py)・[共有の関数](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/sharing/service.py)
 
-## 二人と、間にいる受け渡し役
+## 共有候補が一件返るまで
 
-ここでいう**クライアント**は依頼を送る側のプログラム、**サーバー**は依頼を受けて返事をする側のプログラムです。葵さんと蓮さんは、どちらも自分の端末からサーバーを利用します。サーバーへの依頼と応答の伝え方にHTTPを使います。たとえば依頼を新しく作るときは `POST`、届いた一覧を読むときは `GET` という種類の要求を送ります。以下は製品の設計を順にたどった例です。
+ここでは `models.ImageRecord` の例として、IDが `"P"`、`caption="RC回路"`、`tags=["板書"]`、`transcript=""` の一枚を使います。呼び出し元はローカルのテストに相当し、各関数を順に呼びます。
 
-| 段階 | 起きること | この時点でサーバーにあるもの |
+```python
+candidates = match_candidates("板書", [record])
+candidate = candidates[0]
+path = approved_image_path(candidate.image_id, {"P"}, [record])
+```
+
+最初の行で `match_candidates` は各記録の説明、文字起こし、タグをつないで照合用の文字列にします。`_bigrams` は隣り合う2文字を集め、検索語の集合と説明側の集合の重なりを測ります。この例では検索語「板書」が元の照合用文字列にもそのまま含まれるので、実装中の完全な部分文字列一致の分岐でスコアが1.0になります。戻るのは `[Candidate(image_id="P", score=1.0, caption="RC回路")]`。候補には画像の保存場所が含まれていません。[候補型と照合処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/sharing/service.py#L7-L39)
+
+最後の行の三つの引数は、**選んだID、呼び出し側が用意した承認済みIDの集合、元の記録の一覧**です。関数は集合に `"P"` があることを確かめ、対応する記録の `stored_path` を文字列で返します。集合が空なら `PermissionError`、承認済みでも一覧に該当記録がなければ `LookupError` です。ここにHTTP通信やログインした人の確認はありません。独立した[HTTPの例](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/examples/help/fastapi_server.py)と、製品で予定する[複数枚の承認・転送](../lessons/09-sharing.md)には別の呼び出しが必要です。[承認関数](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/sharing/service.py#L42-L49)・[呼び出して検査するテスト](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/tests/test_sharing.py)
+
+## 「分類名を変える」ならどのファイルが影響を受けるか
+
+ここまで読むと、変更内容を具体的なファイルまで絞れます。次は同じ画面上の名前に見える二つの変更例です。
+
+| 仮の変更 | 値が通る経路 | 変更前のデータで確かめること |
 |---|---|---|
-| 依頼 | 蓮さんが葵さんを指定し、欲しい内容を文章で送る | 依頼番号R、差出人、宛先、依頼文。写真は0枚 |
-| 選択 | 葵さんの端末で候補を探す。回路図に加え、検索語に引っかからなかったグラフも手で選ぶ | Rはまだ未承認。アルバムの一覧も写真も届いていない |
-| 承認 | 葵さんが二枚を確認して承認する。端末が送信用の画像を用意し、まとめて送る | 全件の確認と保存に成功したときだけ、Rが承認済みになり、受け渡し用のファイル2件が登録される |
-| 受信 | 蓮さんが自分の依頼Rのファイル一覧を取得し、それぞれダウンロードする | 誰のどの依頼に属する画像かを確認した上で、写真の中身を返す |
+| `notes` の表示を「授業メモ」にしたい | `core/models.py` の `CATEGORY_LABELS["notes"]` → `ui/main_window.py` の選択肢と一覧表示。コンボボックスの内部値は引き続き `"notes"` | 既存行 `category="notes"` が新しい表示名で一覧に出て、同じ絞り込みで選べる |
+| 保存するキー自体を `notes` から `lecture` にしたい | `Category`、`CATEGORIES`、ラベル辞書、`classification/service.py` の戻り値、`ImageRepository.save/list_images` の入力検査、既存DBのカテゴリ値に影響する | 古いDBに `"notes"` が残ったままラベル辞書からそのキーを消すと、全件表示の `CATEGORY_LABELS[record.category]` で `KeyError`。旧キーをどう変換するか決めて読み書きの両方を確認する |
 
-この間、葵さんのPC上のファイルの場所を教えるだけでは蓮さんは写真を開けません。第2章で区別した「場所」と「中身」の違いが、ここで効きます。また、送信用の画像は撮影場所などの付加情報を落として作り直す設計です。元の写真を自分の端末に残すことと、相手に何を渡すかを別々に決められます。[共有の設計](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/sharing/API_DESIGN.md)
+新契約の `category_id` と旧GUIの `category` は定義元も利用者も違います。片方の名前を変更する前に、`from imagebox.core.models import ...` と `from imagebox.core.contracts import ...` のどちらを読むコードなのかを調べます。旧DBの変更が、そのままFakeの辞書に適用されることはありません。[旧モデル](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/models.py)・[GUIでキーと表示名を結ぶ箇所](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L47-L70)・[旧DBの入力検査](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L72-L110)
 
-## 本人が分かっても、渡してよいとは限らない
+## 型を変えた直後に例外が出るとは限らない
 
-サーバーでは、秘密の文字列（トークン）を提示した人が登録済みの誰に当たるかを調べます。これが**認証**です。その人が、この依頼でこの操作をしてよいかを調べるのが**認可**です。二人とも本人として登録済みでも、同じことができるわけではありません。
+`tags` を一個の文字列にして `"回路"` を渡したとします。旧版の `save` はタグの各要素を検査しないため、`json.dumps` は文字列を正当なJSONとして保存できます。読み出し側の `json.loads` も成功します。ところが共有側の `*rec.tags` はリストなら `"回路"` 一個、文字列なら `"回"` と `"路"` の二個に展開します。`" ".join(...)` した直後の照合用テキストには `"回 路"` が入り、検索語 `"回路"` の連続一致が外れます。2文字組を作る側は空白を消すので、候補が必ず消えるわけではありません。壊れたのは型とスコア計算の条件です。新しいAI応答の検査では、同じ文字列が `tags` に届くとリスト型の検査で直ちに `ValidationError` になります。[旧共有の展開処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/sharing/service.py#L14-L39)・[新しい応答の検査](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L22-L45)
 
-たとえば蓮さんが依頼Rを承認しようとしたら、サーバーは蓮さんだと確認できても拒みます。写真を渡す判断ができるのは持ち主の葵さんだからです。逆に、別の友人がRの番号を知っていたとしても、受取人ではないため写真を渡しません。同意の相手と対象は「誰か」「写真があるか」だけでは決まらず、**誰が誰に何を渡すと決めたか**の組で決まります。
+初めて見る関数の場合も、定義の `def` に加えて、呼び出し側の一行、その戻り値の次の利用箇所まで開いてみてください。`approved_image_path` を例にすると「共有する関数」よりも、「承認済みIDと記録の一覧から、指定画像のローカルパスを返す関数」と説明できるようになります。[全Pythonファイルの地図](../reference/files.md)・[関数の読解索引](../reference/code.md)・[小さな変更を実装する例](../lessons/11-assessment.md)
 
-## 失敗した二枚目と、残してよいもの
-
-承認時に二枚目のファイルが壊れていた場合を考えます。葵さんは「二枚で承認」したので、一枚だけを渡すと本人が選んだ内容と食い違います。設計では二枚とも利用できるか確かめ、失敗時は依頼を未承認のままにし、準備中にできたファイルも片付けます。第5章のトランザクションで戻せるのはデータベースへの変更です。ディスクに作った一枚目のコピーを消す作業は、別に引き受ける必要があります。[複数枚を承認する条件](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/ACCEPTANCE_TESTS.md)
-
-この共有の一連の流れは現在の画面から実行できません。現在動かせるのは、手元の写真から候補を選ぶ関数や、登録したトークンで「自分は誰か」を確かめる独立した通信例です。後者では正しいトークンで問い合わせると本人の名前が返りますが、それだけで写真二枚の承認や転送を確認したことにはなりません。[現在の候補選び](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/sharing/service.py) · [本人確認の独立例](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/examples/help/fastapi_server.py)
-
-## 一枚の写真から設計を説明する
-
-第1章で黒板を撮ったとき、欲しかったものは「翌週に使える写真」でした。そのために、まず画像をファイルに残し、同じ一枚を指せる番号を付けます。人が何をしたかは画面で受け、保存担当へ渡します。言葉を添えると中身から検索でき、用途を別に持つと同じ板書でも違う目的で整理できます。時間のかかる仕事を後から安全に終わらせるには、仕事の記録と編集の版が要ります。そして他人に渡すときには、写真の番号だけでなく、持ち主と受取人を結ぶ依頼が必要になります。
-
-この説明の途中で「それは今どの関数で動いているのか」と気になった場所が、次にコードを読む入口です。現行の画面を一本通して読みたいなら[通常起動と開発用テストの追跡表](../lessons/10-trace.md)、友人へ渡すときの要求と応答を詳しく見たいなら[HTTPの実装ノート](../lessons/09-sharing.md)に進めます。
-
----
-
-[前へ　5　時間と失敗を扱う](time.md)　·　[概論へ](../index.md)
+[前へ　5　非同期処理と更新順序](time.md)　·　[概論へ](../index.md)

@@ -20,9 +20,12 @@ with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
             assert "概論" in page.locator("article h1").inner_text()
             for img in page.locator("article img").all():
                 assert img.evaluate("el => el.complete && el.naturalWidth > 0")
-            for chapter in ["写真を覚える", "ボタンから処理へ", "写真に意味を付ける", "時間と失敗を扱う", "人と人の間で渡す"]:
+            for chapter in ['起動とイベント', '一枚の画像とSQLite', 'データ型と契約', '非同期処理と更新順序', '検索・共有と変更の影響']:
                 page.locator("article a").filter(has_text="次へ").filter(has_text=chapter).click()
                 assert chapter in page.locator("article h1").inner_text()
+            page.locator("article a").filter(has_text="全Pythonファイルの地図").click()
+            page.locator("article summary").filter(has_text="core/repository.py").click()
+            assert page.locator("article details[open]").get_by_text("ImageRepository.import_file", exact=False).is_visible()
             page.locator('label[for="__palette_1"]').click()
             assert page.locator("body").get_attribute("data-md-color-scheme") == "slate"
             page.locator("input[data-md-component='search-query']").fill("楽観ロック")
@@ -30,7 +33,7 @@ with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
             page.locator("input[data-md-component='search-query']").fill("音声")
             page.locator(".md-search-result__item:visible").first.wait_for()
             page.keyboard.press("Escape")
-            for lesson in ["lessons/02-boot", "reference/schema", "lessons/07-jobs", "lessons/09-sharing"]:
+            for lesson in ["course/operate", "lessons/02-boot", "reference/schema", "lessons/07-jobs", "lessons/09-sharing"]:
                 page.goto(base + lesson + ".html")
                 assert page.locator("article img").evaluate("el => el.complete && el.naturalWidth > 0")
             page.set_viewport_size({"width": 390, "height": 844})

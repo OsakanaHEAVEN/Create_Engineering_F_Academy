@@ -1,42 +1,45 @@
-# 2　写真を覚える｜アルバムを閉じても一枚が残る理由
+# 3　一枚の画像とSQLite｜関数を越えて値を追う
 
-アルバムに「回路の板書.png」が一行増えました。このとき、何が保存されたのでしょうか。まずは「画像を取り込む」で選んだ写真を、元のフォルダから別の場所に移した場面を考えてみましょう。最初の場所だけ覚えていたら、アプリは翌日その写真を開けません。現在のアプリは、取り込み時に自分で管理するフォルダへ写真をコピーします。こうすると、元の写真を持ち主がどう整理するかと、アプリが自分の写真をどう整理するかを切り離せます。
+[第2章](operate.md)で画面が渡した `Path(name)` を、今度は `core/repository.py` の側から見ます。例には `board.png` を使います。パスは「ファイルの場所」を表す値です。関数にパスを渡すだけで、画像の中身までPythonの変数に読み込まれるわけではありません。
 
-## 写真そのものと、写真についての一行
+## `import_file` の入口から `return item` まで
 
-画面に黒板を表示するには、線や文字の見た目を再現できる情報が要ります。PNGファイルには、そのための情報がPNG形式で記録されています。一方、「回路の板書.pngという名前で取り込んだ」「今はその他に分類されている」と表示するだけなら、黒板の絵を読み解く必要はありません。必要なのは**その写真についての記録**です。こうした情報をメタデータといいます。
-
-ここで三つの値を並べてみます。同じ写真を指していても、できることが違います。
-
-| 手元にあるもの | 例 | それを使ってできること |
+| コードに現れる値 | この例での中身 | 次に読むコード |
 |---|---|---|
-| ファイル名 | `回路の板書.png` | 人が一覧で見分ける。同じ名前の別の写真もありうる |
-| パス（ファイルの場所） | `D:/授業/回路の板書.png` | そのPCでファイルを開く。文字列を友人に送っても友人のPCに写真は現れない |
-| ファイルの中身 | PNG形式で記録されたデータ | 画像として開く、コピーする、通信で届ける |
+| `source = Path(path)` | 選んだ `board.png` の場所 | `source.is_file()` が存在を確かめ、`Image.open(source)` が中身を開く |
+| `image_format` と `ext` | Pillowが読み取った `"PNG"` と、それに対応する `".png"` | `target` のファイル名に使う。元の拡張子だけで形式を決めていない |
+| `image_id` と `target` | 新しいIDと `images/<ID>.png` | `shutil.copy2(source, target)` が管理用コピーを作る。画像本体を書き込むのはここ |
+| `item` | `models.ImageRecord`。`original_name="board.png"`、`stored_path` はコピーの絶対パス、`category="other"` | `self.save(item)` がこの記録をDBに書く。成功すると `import_file` が `item` を返す |
 
-コードで `bytes` という型が出てきたら、ファイルの中身などをメモリに読み込んだときの「バイトの並び」だと考えてください。1バイトは8ビットです。ここで初めてバイトが必要になります。画面から写真を選ぶ段階でPythonが受け取るのは、まず場所を表す文字列です。
+`save` と `import_file` は親子の呼び出しですが、戻り値は違います。`save` は書き込みを終えると `None` を返します。`import_file` は手元にある `item` をそのまま呼び出し元へ返せます。コピー後、記録の生成や保存中に例外が起きると `import_file` は管理用コピーを削除して例外を送り直します。コピーとSQLiteへの書き込みは別の操作なので、二つの操作の間にプロセスが突然終了すれば、コピーだけが残る可能性があります。[取込・保存処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L44-L90)
 
-## 同じ名前の板書を二枚入れたら
+## オブジェクト、SQLの一行、画面の一行
 
-月曜のフォルダにも火曜のフォルダにも `board.png` があるとします。同じ管理フォルダに同じ名前でコピーすれば、区別できません。実装は取り込むたびにUUIDという識別番号を作り、管理用のファイル名に使います。以下の `P` と `Q` は、実際には32桁ある番号を読みやすく縮めたものです。
+一枚の記録に `tags=["回路", "板書"]` を持たせると、Pythonでは「要素が二つのリスト」です。`save` は `asdict(record)` で各項目を辞書に取り出し、`json.dumps(fields["tags"], ensure_ascii=False)` でリストを文字列に変換し、SQLiteの `tags_json` 列に渡します。DB側に入っているのは `["回路", "板書"]` という文字の並びです。角括弧も引用符もデータの一部です。
 
-| 元の場所 | 管理用コピー | 画面に表示する元名 | 分類 |
-|---|---|---|---|
-| 月曜/board.png | images/P.png | board.png | その他 |
-| 火曜/board.png | images/Q.png | board.png | その他 |
+逆向きに `list_images(None)` を呼ぶと、`SELECT` が返した各行から `json.loads(row["tags_json"])` がリストを復元し、`ImageRecord(...)` が新しいオブジェクトを作ります。`None` は全分類、`"notes"` を渡せば `WHERE category=?` による絞り込みです。画面はその一覧から `original_name`、分類キーに対応する表示名、`caption` を読みます。タグ自体はここで表示しません。[型の定義](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/models.py#L16-L28)・[読み出し](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L92-L116)・[画面への反映](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L64-L70)
 
-ファイルの中身は管理フォルダに、表のような記録は `images.sqlite3` に残ります。**SQLite** は、このような行と列を持つ表を、一つのデータベースファイルに保存して読み書きする仕組みです。Pythonで作ったオブジェクトはアプリを閉じると失われますが、ディスクに保存した行は残ります。翌日の画面はその行をもう一度読み、新しいPythonオブジェクトに組み立て直して表示できます。[実際のコピーと登録](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L44-L90)
+## 実物で観察する　代入した直後、いつ表示に反映されるか
 
-## 表示から消えたとき、何が消えたのか
+```python
+item = repo.import_file(source)
+item.caption = "RC回路の板書"
+before = repo.get(item.id)
+repo.save(item)
+after = repo.get(item.id)
+```
 
-二枚とも「その他」のとき、画面の絞り込みを「メモ・板書・資料」にすると一覧は空になります。これは「その分類の行を表示する」という条件に合う写真がゼロになったためです。「すべて」に戻すと二枚とも見えます。写真も記録も消えていません。
+最初の `get` は、同じIDを持つ別のPythonオブジェクトをDBから作ります。その時点ではDBの説明はまだ空文字です。`save` の後でも、すでに読み出した `before.caption` は空文字のままです。もう一度読み直した `after.caption` に初めて新しい説明が入ります。GUIが取込時の戻り値を捨てて一覧を読み直す理由も、これでコードから説明できます。画面が表示するのは、現在の絞り込みに合い、DBに保存された記録です。
 
-一方、現在の画面で「その他」を選び、一括削除を**確定**すると、その分類の記録と管理用コピーが削除されます。取り込み元の月曜・火曜のファイルは残ります。今後の設計には、ごみ箱に移して同じ写真番号で復元する操作があります。この二つを同じ「一覧から消えた」という画面だけで見分けることはできません。保存した場所と記録を知って、初めて違いを説明できます。[現在の削除処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L118-L132) · [ごみ箱を含む設計](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/DATA_SCHEMA.md)
+[実行例　handoff.py](../labs/handoff.py) は一時フォルダに本物のPNGとDBを作り、この順序で呼び出します。出力の `same_object=False` は、同じIDであっても `before` と `item` が別の実体であることを示します。実行すると、同じIDを次の三つの表し方で比較できます。
 
-もう一つ、アルバムに行が増えるまでには「人が操作した」という入口が必要です。次は、一度ボタンを押してから一覧が描き直されるまでを、Pythonの短い関数に戻して読みます。
+```text
+imagebox.core.models.ImageRecord
+before='', same_object=False
+save=None, DB=["回路", "板書"], Python=['回路', '板書']
+before='', after='RC回路の板書'
+```
 
-**詳しく読む**　[PythonのリストがDBの文字列になる過程](../lessons/03-storage.md) · [すでに写真が入ったDBを移行する例](../reference/schema.md)
+[実行環境とコマンド](../reference/setup.md)・[トランザクションと削除を詳しく読む](../lessons/03-storage.md)・[新しいスキーマへの移行](../reference/schema.md)
 
----
-
-[前へ　1　概論｜写真を撮った後に](../index.md)　·　[次へ　3　ボタンから処理へ](operate.md)
+[前へ　2　起動とイベント](operate.md)　·　[次へ　4　データ型と契約](meaning.md)

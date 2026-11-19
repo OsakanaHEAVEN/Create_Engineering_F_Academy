@@ -1,45 +1,34 @@
-# 4　写真に意味を付ける｜板書の内容と、撮った理由
+# 4　データ型と契約｜同じ名前の記録を見分ける
 
-同じ黒板を、葵さんと蓮さんが並んで撮りました。葵さんは「来週のレポートに使おう」、蓮さんは「この式変形をAIに質問しよう」と考えています。二人の写真を見比べても、この違いはまず分かりません。写真に説明を付けることと、用途を決めることを別の仕事にした理由はここにあります。
+ここからは `core/contracts.py` を開きます。第3章に登場した `ImageRecord` と同じ名前のクラスがありますが、こちらは写真の処理がどこまで進んだかも表します。二つを区別する一番短い書き方は `models.ImageRecord` と `contracts.ImageRecord` です。ドットの左側が定義元です。
 
-## 一枚に添える言葉には、それぞれ役目がある
-
-設計上、この二枚に次のような情報が添えられます。説明文と用途は理解のための例で、実際のAIの返答を記録したものではありません。
-
-| | 葵さんの写真 | 蓮さんの写真 |
+| 一枚取り込んだ直後 | `models.ImageRecord`（通常のGUI） | `contracts.ImageRecord`（新しい契約。ここではFakeで観測） |
 |---|---|---|
-| 見た目から書ける説明 | 黒板にRC回路と充電曲線が描かれている | 黒板にRC回路と充電曲線が描かれている |
-| 撮るときに話した言葉 | 来週のレポートに使おう | この式変形をAIに質問しよう |
-| 用途の候補 | メモ・資料 | AI入力 |
+| どの関数が作るか | `ImageRepository.import_file(Path)` | `FakeRepository.import_image(str) → _add` |
+| 画像の場所 | `stored_path` に管理コピーの絶対パス | `stored_relpath` に管理用の相対パスを組み立てる。Fakeの `get_image_path(id)` が返すのは入力ファイルの場所 |
+| 分類の初期値 | `category="other"`。画面表示は「その他」 | `category_id=None`。まだ分類していないことを表す。「その他」に確定すると `"other"` |
+| 更新の仕方 | 属性へ代入して `save(record)` でDBに保存 | `save_annotation` などが版を確認し、`replace` で新しい記録を作って辞書へ入れ直す |
 
-一段目の仕事は、写真に添える説明、タグ、音声を文字にしたものを集めることです。このひとまとまりをコードでは `Annotation` と呼びます。二段目は、その内容と、その人がいま使っているカテゴリ一覧を照らして、用途を一つ選ぶことです。こう分けると、葵さんが後から「レポート用」というカテゴリを追加しても、一段目で得た説明を二段目でもう一度使えます。[付加と分類の入出力](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/CONTRACTS.md)
+新型の `@dataclass(frozen=True)` は、既存の実体で `record.caption = ...` のように属性を付け替える操作を防ぎます。ただし `tags` が持つリストの中身までは固定しません。リストを直接変更すると更新メソッドの版チェックを通らないため、編集経路の設計ではこの違いも効いてきます。[旧型](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/models.py)・[新型](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/contracts.py)・[Fakeの登録と書き換え](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L48-L167)
 
-## AIに実際には何を手渡すのか
+## `RepositoryPort` は何を渡せると約束するか
 
-画像の説明を作る関数には、画像の場所と文字起こしを渡します。たとえば `annotate("D:/授業/board.png", "レポートに使う")` です。これは呼び出し方の例です。通常の画面で写真を選んでも、この関数までは呼ばれません。
+`repo: RepositoryPort = FakeRepository()` の `: RepositoryPort` は、この変数を通じて使うメソッドの形を表す型ヒントです。実際に動くオブジェクトを作るのは右辺です。`Protocol` を使うと、利用側は「`register_capture(data)` を呼べば所定の `ImageRecord` が返る」と書けます。契約を定義しただけで保存先が作られたり、起動時の `MainWindow.repo` がこの実体に切り替わったりはしません。[契約を使う実際のテスト](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/tests/test_contract_bootstrap.py#L46-L64)
 
-この部品を直接使うと、まず外部送信への同意とAPIキーを確認します。条件がそろったときだけ画像を開き、向きを整えてJPEGとしてメモリに書き出します。外部のサービスは葵さんのPCの `D:/授業/` を開けません。そこで、用意した**画像ファイルの中身**と、指示文の中に組み込んだ「レポートに使う」という文字列を送ります。マイクの録音をそのまま送る処理ではありません。録音を文字に変える関数は、別にローカルで動く部品です。[画像を送る関数](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L48-L96) · [音声を文字にする関数](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/audio.py)
+例えば旧GUIは `list_images(None)` を呼べます。Fakeの同名メソッドは `SearchQuery` を受け取り、まず `query.limit` を読みます。GUIの `ImageRepository()` を単純に `FakeRepository()` へ書き換えると、起動時の一覧更新で `None.limit` を読もうとして止まります。メソッド名に加え、**呼び出し側の引数と、結果から読む属性**がそろって初めて置き換えられます。[旧版の一覧](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L92-L110)・[Fakeの一覧](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L113-L142)
 
-返答も、そのままアルバムに書けるとは限りません。次は、実物の検証関数へ渡す入力を一つずつ変えた例です。JSONは、名前と値の組やリストを文字で表す形式です。
+## AIへの依頼、応答の検査、保存は別々の呼び出し
 
-| 届いた文字列 | 読み取った値 | この部品の結果 |
-|---|---|---|
-| `{"caption":"  充電曲線  ","tags":[" 回路 "]}` | 説明は文字列、タグは文字列のリスト | 空白を整え、説明「充電曲線」、タグ「回路」、元の文字起こしを含むAnnotationを返す |
-| `{"caption":"充電曲線","tags":"回路"}` | タグが単独の文字列 | 必要なリストの形に合わず、検証エラーを返す |
-| `[]` | 読めるJSONだが空のリスト | 説明とタグを取り出す辞書がないので、やはり検証エラーになる |
+`GeminiVisionProvider.annotate(image_path, transcript)` が受け取るのは「画像のある場所」と「文字起こし済みの文章」です。`_clean_jpeg` は画像を開いて向きを補正し、RGBに変換してメモリ上にJPEGとして書き出します。ここで初めて戻り値の型が `bytes`、つまり**JPEGファイルの中身を表すデータ**になります。`annotate` はその値と文字起こしを含む指示文をSDKに渡し、応答本文を次の関数へ渡します。[外部サービスを呼ぶ箇所](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L48-L97)
 
-この時点で返ったのはPythonの値です。ディスクに保存するには、その値を受け取った側が、対象の写真番号を指定して保存を頼みます。言葉の形式が正しいことと、本当に充電曲線が写っていることも別です。だから所有者が説明を直せる設計に意味があります。[返答を検査するコード](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L22-L45)
+次は同じ実装の `_parse_annotation(text, transcript, model)` だけを呼んだ例です。通信せずに確認できます。
 
-## 「検索する」と「分類する」はどこで分かれるか
+```python
+a = _parse_annotation('{"caption":"  RC板書 ","tags":[" 回路 "]}', "復習用", "教材モデル")
+```
 
-葵さんが「回路」と入力したとします。「メモ・資料」にも「AI入力」にも回路の写真がありえます。検索で欲しいのは、その言葉に合う写真の一覧です。各写真の用途を変更する必要はありません。
+`json.loads` で辞書になり、`caption` と `tags` の型・長さを確認してから空白を取り除きます。戻る `a.caption` は `"RC板書"`、`a.tags` は `["回路"]`、`a.transcript` は呼び出し側が渡した `"復習用"` です。`tags` が数値のリストなら `ValidationError` が出て、`a` への代入まで届きません。正常時もこの関数ではDBに一行も書きません。結果をどの写真に付けるかは、写真IDを持つ呼び出し側が決めます。[検査と値の生成](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L22-L45)・[正常・異常応答の実行例](../labs/response.py)
 
-開発用のFakeでは、説明・タグ・文字起こし・元の名前をつなぎ、全角と半角などをそろえて言葉を探します。「ＲＣ　板書」と入力した場合、説明に「RC回路」、元の名前に「板書.png」がある一枚は、二語が別々の場所にあっても見つかります。「板書」だけが入った一枚は、この条件では外れます。一方、Fakeの分類担当はカテゴリ一覧に「授業」という名前があればその番号を返します。これは受け渡しを確かめるための簡単な規則です。通常画面の絞り込みで使うのは、選んだ分類が一致するかどうかです。[開発用の検索と分類](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py) · [現在の一覧表示](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L64-L70)
+[契約とFakeを詳しく読む](../lessons/04-contract.md)・[音声認識とAI部品](../lessons/06-ai.md)
 
-ここまでは「言葉が返ってきた後」を見ました。実際には、その返事を待つ間に人がもう一枚撮ったり、自分で説明を書いたりします。次の章では、その時間差に目を向けます。
-
-**詳しく読む**　[音声・画像・JSONを関数単位で追う](../lessons/06-ai.md) · [検索語が一致する例と、候補の得点を計算する例](../lessons/08-album.md)
-
----
-
-[前へ　3　ボタンから処理へ](operate.md)　·　[次へ　5　時間と失敗を扱う](time.md)
+[前へ　3　一枚の画像とSQLite](remember.md)　·　[次へ　5　非同期処理と更新順序](time.md)

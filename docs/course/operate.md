@@ -1,46 +1,44 @@
-# 3　ボタンから処理へ｜クリックを誰が受け取るのか
+# 2　起動とイベント｜誰が次の関数を呼ぶか
 
-取り込んだ写真が残る仕組みが分かると、次に気になるのは「いつ、誰が保存を頼むのか」です。普段書く短いPythonプログラムなら、上から順に計算して最後に結果を表示します。ところがアルバムを開いた人は、すぐ写真を選ぶかもしれないし、何もせず閉じるかもしれません。そこで画面を作るときに「このボタンが押されたら、この関数を呼ぶ」と決め、あとは操作を待ちます。これが**イベント駆動**という考え方です。
+[第1章の配置図](../index.md)で見た四つのファイルのうち、この章で開くのは `__main__.py` と `ui/main_window.py` です。ウィンドウを開く前に一度だけ通る処理と、表示した後で何度も呼ばれる処理を、実行順に読んでみましょう。
 
-## 起動の4行を上から読む
-
-Windowsで `python -m imagebox` を実行すると、パッケージの入口にある `main()` に進みます。本体の4行をそのまま読んでみましょう。[入口の定義](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/__main__.py#L9-L13)
+## 普通の関数呼び出しとして起動を読む
 
 ```python
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-return app.exec()
+def main() -> int:
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    return app.exec()
 ```
 
-1行目の `app` は、画面に届く操作や表示の更新を扱うQtのアプリケーションです。2行目では、アルバムのウィンドウを一つ作ります。クラス名に括弧を付けると、初期化の関数 `__init__` が動きます。その中の `self.repo = ImageRepository()` は、写真の読み書きを担当するオブジェクトを作り、このウィンドウに持たせる行です。`self` は、いま初期化しているウィンドウ自身を指します。この時点で第2章のデータベースが開き、最初の一覧も読み込まれます。
+`sys.argv` は起動時の引数のリストです。二行目の代入でQtアプリができ、次の `MainWindow()` ではウィンドウの初期化が最後まで進みます。`window` に結果が入る時点で、データベースの最初の読み出しも済んでいます。順序を決めているのは `MainWindow.__init__` の末尾にある `self.refresh()` です。`show()` を呼んでから `app.exec()` に入ると、Qtがクリックや終了操作を待ちながら対応する関数を呼びます。待機が終わって初めて `main` は終了コードを返し、入口の `raise SystemExit(main())` がそれをプロセスの終了に使います。[入口](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/__main__.py#L9-L17)・[ウィンドウの初期化](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L22-L40)
 
-3行目は表示を要求します。4行目の `exec()` は、クリックや終了操作が届くたびに担当へ回す**イベントループ**に入ります。関数がまだ戻ってこないのは、アプリが操作を受け付け続けているからです。通常の終了操作では、ウィンドウが保存担当に接続を閉じさせ、ループが返した終了コードが呼び出し元へ戻ります。[画面の組み立てと終了処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py)
+![教材用のPNGを取り込んだ、この版の分類タブ](../figures/album-window.png)
 
-## 「あとで呼んでください」と「いま呼びます」
+## クリックと関数をつなぐ一行
 
-取り込みボタンに結び付ける行は `add.clicked.connect(self.add_image)` です。`clicked` はボタンを押したという知らせ（**シグナル**）、`self.add_image` は知らせを受けたときに動く関数です。この行には `self.add_image()` という括弧がありません。括弧があれば、ウィンドウを組み立てている今ここでファイル選択画面を開いてしまいます。関数そのものを渡すから、「あとで」が表現できます。
+```python
+add.clicked.connect(self.add_image)
+```
 
-実際に一回クリックした後、三通りの操作を比べてみましょう。
+`add` は「画像を取り込む」ボタンです。括弧の中をよく見ると `self.add_image` の末尾には `()` がありません。ここでボタンに渡すのは「このウィンドウの `add_image` を後で呼べる値」です。これを呼び出すきっかけになるQtの通知を**シグナル**と呼びます。もし `self.add_image()` と書けば、ボタンを作っている最中にファイル選択が始まり、`connect` にはその実行結果の `None` が渡ってしまいます。[ボタンを作る場所](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L42-L62)
 
-| 選択画面でしたこと | 関数に届く値の例 | 画面に起きること |
+## `board.png` を選んだときに渡るもの
+
+| 呼ぶ側 → 呼ばれる側 | 渡すもの | 戻った後、呼んだ側はどうするか |
 |---|---|---|
-| キャンセル | 空のリスト `[]` | 繰り返しは0回。保存せずに一覧を読み直す |
-| 一枚選ぶ | `["D:/授業/board.png"]` | 場所を表す文字列を `Path` にし、保存担当へ1回渡す。登録後の一覧に一行増える |
-| 正常なPNGと、画像として読めないファイルを選ぶ | 二つの場所が入ったリスト | 読めた写真は登録される。読めないもののエラーを記録し、一覧を更新してから警告を出す |
+| Qt → `MainWindow.add_image` | クリックの通知。このメソッドにファイル名の引数はない | メソッド内でファイル選択を開く |
+| `add_image → QFileDialog.getOpenFileNames` | 親ウィンドウ、タイトル、初期フォルダ、選択条件 | 結果の組を `paths, _` に分ける。`paths` は選んだファイル名のリスト、`_` に入る選択フィルタは使わない |
+| `add_image → self.repo.import_file` | リストから取り出した文字列を `Path(name)` にしたもの | 戻り値は一枚分の記録。`add_image` は変数に代入せず、次のファイルを処理する |
+| `add_image → self.refresh` | 引数なし。画面の選択状態を `self` 経由で読む | 一覧を消し、`self.repo.list_images(category)` が返した記録から各行を描き直す |
 
-ボタンが直接SQLを書く必要はありません。画面は「この場所の画像を取り込んで」と依頼し、保存担当は検査・コピー・登録を引き受けます。読み書きをひとまとめにしたこの窓口を **Repository（リポジトリ）** と呼びます。ここでのRepositoryはPythonのオブジェクトです。授業資料を置いているGitHubのリポジトリとは、同じ名前でも指すものが違います。[クリック後に呼ぶ関数](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L72-L84)
+キャンセルなら `paths` は空で、保存関数は一度も呼ばれません。それでもループの下の `refresh()` は一度呼ばれます。二枚選び、一枚目が画像として読めず `ValueError` になった場合は、`errors` に理由をためて二枚目へ進みます。最後に一覧を更新し、失敗理由をまとめて表示します。`sqlite3.Error` はこの `except (ValueError, OSError)` の対象外なので、同じ経路で警告されるとは限りません。[取り込みと一覧更新](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L64-L84)
 
-## 同じ操作名でも、相手が違えば残るものが違う
+## 接続を閉じるのは誰か
 
-開発中に画面の絞り込みだけ試したいとき、毎回ディスクに写真をコピーすると準備が大変です。そこで新しい設計には、登録した情報をPythonの辞書に持つ代役があります。これが第1章で触れたFakeです。たとえば新しい契約の `repo.import_image(path)` に元のPNGの場所を渡すと、Fakeでも写真番号が返ります。ただし、元ファイルの場所を記憶しているだけで、管理用コピーはできません。別のFakeを新しく作ると一覧は空です。
+ウィンドウを閉じると、Qtは `MainWindow.closeEvent(self, event)` を呼びます。画面は `self.repo.close()` を呼び、保存担当が自分の接続を `self.conn.close()` で閉じます。その後で画面は親クラスに終了イベントを渡します。`self.repo` を持つ側と `self.conn` を持つ側の区別が、終了時にもそのまま現れます。[画面の終了処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L107)・[接続を閉じるメソッド](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L41-L42)
 
-呼び出す側が必要とするメソッド名、引数、戻り値の型を記述する道具がPythonの **Protocol** です。型を書くだけで実際の保存先が切り替わるわけではありません。通常画面が呼ぶのは旧形式の `import_file`、開発中の共通契約が定めるのは `import_image`。どちらの説明を読んでいるか迷ったら、**どのオブジェクトを生成し、どの関数を呼んだか**に戻れば判別できます。[開発用の保存担当](../lessons/04-contract.md)
+[Pythonがこの入口を見つける仕組み](../lessons/01-python.md)・[Qtの起動を手元で観察する](../lessons/02-boot.md)
 
-さて、一行増えた写真の説明欄は、いまは空欄です。次の章ではそこに言葉が入ると、同じ写真から何ができるようになるかを見ます。
-
-**詳しく読む**　[Pythonが入口を見つける仕組み](../lessons/01-python.md) · [ウィンドウの実際の呼び出し順](../lessons/02-boot.md)
-
----
-
-[前へ　2　写真を覚える](remember.md)　·　[次へ　4　写真に意味を付ける](meaning.md)
+[前へ　1　技術概論](../index.md)　·　[次へ　3　一枚の画像とSQLite](remember.md)

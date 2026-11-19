@@ -1,6 +1,6 @@
 site_name: Create Engineering F 技術講義
 site_url: https://osakanaheaven.github.io/Create_Engineering_F_Academy/
-site_description: 写真を覚える・意味を付ける・人に渡す体験から学ぶ、Create Engineering F の日本語講義
+site_description: 実際のPythonファイル、関数の呼び出し、データの受け渡しから学ぶ日本語の技術講義
 repo_name: 教材リポジトリ
 repo_url: https://github.com/OsakanaHEAVEN/Create_Engineering_F_Academy
 edit_uri: ""
@@ -41,12 +41,12 @@ extra_javascript: [assets/literal-search.js]
 extra_css: [figures/reading.css]
 nav:
   - 講義本編:
-      - 1　概論｜写真を撮った後に: index.md
-      - 2　写真を覚える: course/remember.md
-      - 3　ボタンから処理へ: course/operate.md
-      - 4　写真に意味を付ける: course/meaning.md
-      - 5　時間と失敗を扱う: course/time.md
-      - 6　人と人の間で渡す: course/share.md
+      - 1　技術概論: index.md
+      - 2　起動とイベント: course/operate.md
+      - 3　一枚の画像とSQLite: course/remember.md
+      - 4　データ型と契約: course/meaning.md
+      - 5　非同期処理と更新順序: course/time.md
+      - 6　検索・共有と変更の影響: course/share.md
   - 実装ノート:
       - 画像ファイルとSQLite: lessons/03-storage.md
       - 既存DBの移行: reference/schema.md
@@ -62,7 +62,8 @@ nav:
       - テストと仕様変更の実例: lessons/11-assessment.md
   - 資料室:
       - 実行環境: reference/setup.md
-      - ソース読解索引: reference/code.md
+      - Pythonファイルの地図: reference/files.md
+      - 関数の読解索引: reference/code.md
       - 用語集: reference/glossary.md
       - 調査台帳: reference/audit.md
       - 改訂と公開: reference/update.md

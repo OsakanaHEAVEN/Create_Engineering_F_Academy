@@ -1,37 +1,31 @@
-# 5　時間と失敗を扱う｜先に押した写真が後で届くとき
+# 5　非同期処理と更新順序｜遅れて返った値を何と結び付けるか
 
-写真を一枚だけ撮り、説明が返るまで手を離して待つなら、すべてを順番に処理できそうです。ところが、黒板を消される前に二枚撮りたい場面では、その待ち方が困ります。クリックした時刻、写真の保存が終わる時刻、説明が届く時刻は別々です。この章では時間のずれが生む問題を、三つの短い場面で読みます。
+普通の関数なら呼び出し元はその場で `return` を受け取れます。撮影要求、録音の切り出し、AIジョブでは、受付と完了を別のタイミングで扱います。この三つの実装を読むと、**何のIDか、どの時計の時刻か、いつ読んだ版か**を引数で区別する理由が見えてきます。
 
-## 場面1　撮影前の言葉を、連写した二枚に添える
+## 撮影要求に返る整数と、あとで届くファイル名
 
-葵さんはカメラを開いてから10秒の時点で回路図を、12秒の時点でグラフを撮ります。直前5秒の声を使いたいので、一枚目に欲しいのは5秒から10秒の直前まで、二枚目には7秒から12秒の直前までです。7秒から10秒までの声は両方に入ります。「一枚目で使った音を消す」という仕組みでは、二枚目の冒頭が欠けてしまいます。
+独立した例 `examples/help/qt_camera.py` の `shoot()` は、保存先の絶対パスを文字列にして `capture.captureToFile(...)` に渡します。すぐに返る整数が `request_id` です。0以上なら `pending[request_id] = target` として覚えておきます。書き込み完了時はQtが別の関数 `saved(request_id, filename)` を呼びます。そこで `pending.pop(request_id, None)` すれば、対応する要求時のパスを取り出せます。たとえば41番、42番の順に要求して42番が先に完了しても、取り出すのは42番のパスです。この例の成功時の処理は表示までです。エラー通知では理由を表示しますが、`pending` の項目を取り除くコードはありません。[shootとsavedの接続](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/examples/help/qt_camera.py#L28-L44)
 
-そこで音声を短い数値列として順次受け取り、最近の分だけメモリに残します。この仕組みを**リングバッファ**と呼びます。撮影時には、その瞬間の範囲を別の配列へコピーします。1秒に4回測る小さな例で、時刻0、0.25、0.50、0.75に入った値が順に `1, 2, 3, 4`、続く1.00、1.25、1.50の値が `5, 6, 7` なら、1.50秒で押した写真に入るのは `1, 2, 3, 4, 5, 6` です。開始直後なので存在する分だけを使い、シャッター時刻ちょうどの7は含めません。これが本体の音声部品で確認できる動作です。[切り出し範囲を確かめるテスト](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/tests/test_audio_ring.py)
+## 音声の切り出しはメモリの中で完結する
 
-次に、撮影の要求番号を仮に41と42とします。保存完了の知らせが42、41の順に届いても、42に対応する音声を引けばグラフには二枚目の声が付きます。「最後に録った音」という変数一つで済ませると、遅く戻った一枚目にも二枚目の声を付けてしまいます。Qtの独立例では要求番号と保存先を照合できます。写真・音声の組で保存担当までつなぐのは製品設計上の次の段階です。[撮影の独立例](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/examples/help/qt_camera.py) · [撮影と登録の契約](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/CONTRACTS.md)
+本体の `camera/audio_ring.py` では `push(samples, timestamp)` の時刻がその音声片の**終端**を表します。毎秒4個の値を測る設定で時刻1.0に `[1, 2, 3, 4]` を渡すと、先頭の時刻は `1.0 − 4/4 = 0.0` 秒です。`snapshot(0.75)` なら0.75秒より前の3個だけが入り、戻り値は `(array("h", [1, 2, 3]), 4)` です。後者の4は再生時に必要なサンプルレートです。元の配列を消費しないため次の写真にも重なった区間を使えます。`Lock` は読み出しと書き込みが内部のキューを同時に変えないようにします。
 
-## 場面2　AIの返事を待つ間に、説明を書き直す
+この関数はWAVファイルを作りません。一方、新契約の `register_capture` が受け取る `CaptureInput.audio_tmp_path` はWAVの場所または `None` です。その間には、切り出した配列をファイル化して、対応する撮影要求と一組にする処理が要ります。通常起動の画面にはこの結線がありません。[音声部品の実装](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/camera/audio_ring.py#L27-L88)・[契約の入力型](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/contracts.py)・[PCMからWAVを作る実行例](../labs/sound.py)
 
-写真を確保するのは今すぐ、説明を考えるのは後でも構いません。そこで「写真Pの説明を作る」という**仕事を表す記録**を用意します。この記録がジョブ、待っている仕事から一件引き受ける処理役がワーカーです。画面の外で時間のかかる通信を進めれば、画面は次のクリックを受け取れます。
+## テスト自身が次の関数を呼ぶところまで読む
 
-| 時刻の順 | 起きたこと | 写真Pの説明と版番号 |
+`tests/test_contract_bootstrap.py` の `test_example_standalone_flow_without_other_roles` を開きます。以下で `P` は同じ写真のID、`J` はその付加ジョブのIDの略記です。順番を進めているのは、このテストのPythonコードです。
+
+| テストからの呼び出し | 渡す値 → 戻る値 | Fake内部で変わるもの |
 |---|---|---|
-| はじめ | AIが写真Pの処理を引き受ける | 空欄、版0 |
-| 少し後 | 葵さんが「放電ではなく充電」と手で書き込む | 手動の説明、版1 |
-| 最後 | AIが版0を読んだときの説明を返す | 現在は版1。ずれを検出して手動の説明を保持 |
+| `register_capture` | `CaptureInput` → 写真の記録 | `records[P]` を作り、`jobs[J]` に付加待ちを登録。説明の版も行の版も0 |
+| `claim_job` | `"annotation"` と時刻 → ジョブ辞書のコピー | `jobs[J]["status"]` が `processing` になる。Fakeはこの時刻で期限を判定しない |
+| `FakeVisionProvider.annotate` | 画像パスと `"授業中"` → `Annotation` | 固定の説明と渡された文字起こしをまとめる。この呼び出しだけなら記録の説明はまだ空 |
+| `complete_annotation_job` | `J`、`Annotation`、期待する説明の版0 → 更新後の記録 | `save_annotation` が説明を保存し、続く `_write` が進行状態を更新。説明の版は1、行の版は2。付加を完了扱いにして分類待ちを追加 |
+| `complete_classification_job` | 別途引き受けた分類ジョブのID、選んだカテゴリID、期待する分類の版0 → 更新後の記録 | `set_category` が分類を書き、次の `_write` が完了状態を書く。分類の版は1、行の版は4 |
 
-版番号は、同じ写真が読み取り後に編集されたかを見分ける値です。読んだ版と書く直前の版を照合する方法を**楽観ロック**といいます。Fakeではさらに「今の説明は手動入力か」も調べます。AIが版番号を読み直したとしても、既存の手動値を自動で消さないためです。ここはFakeを使ったテストで動きを確かめられます。[手動編集を守る処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L152-L168)
+では、AIの返答前に人が説明を編集していたらどうでしょう。`save_annotation` は現在の `annotation_revision` と引数の `expected_revision` を比べます。手動保存で現在値が1になれば、古い0を渡した呼び出しでは `ConflictError` が発生します。さらに現在の編集元が `manual` のときは、AIが最新版の1を渡しても上書きを拒みます。前者は「読んだ後で変わったか」、後者は「その値を誰が決めたか」という別々の条件です。Fakeの `complete_annotation_job` 自体はこの例外時にジョブを待ち直しへ戻さないので、引き受け済みの状態が残ります。[テストの呼び出し順](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/tests/test_contract_bootstrap.py#L46-L105)・[版の判定](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L144-L167)・[ジョブ完了処理](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/dev/fakes.py#L262-L306)
 
-## 場面3　説明が完成した瞬間にアプリが落ちる
+このFakeの `jobs` はPythonの辞書で、プロセスを閉じれば消えます。永続ジョブの再起動後の回復と、複数の書き込みを一つのトランザクションにする設計は、[ジョブの読解と小さなSQLite実験](../lessons/07-jobs.md)で比較できます。[連写と録音の時系列](../lessons/05-capture.md)
 
-「説明の仕事を完了にする」と「次の分類の仕事を登録する」を、別々に保存したらどうでしょう。二つの間でアプリが落ちると、再起動した側には「説明済み」とだけ見え、分類を引き受ける人がいません。ここで必要なのが**トランザクション**です。二つのDB変更を一組として確定し、途中で失敗したら両方とも確定前に戻します。
-
-教材の小さなSQLite例では、説明の仕事を `processing`（処理中）から `completed`（完了）に書き換えた直後、わざとエラーを起こします。もう一度表を読むと、残るのは元の `processing` 一行だけです。エラーを起こさず同じ処理を行うと、今度は「説明が完了」「分類が待機中」の二行が残ります。これは実行結果を見られる縮小例です。製品で再起動後に自動再開するには、仕事をディスクに残し、起動時に途中の仕事を回収する実装も要ります。現在のFakeは新しく作り直すと空になります。[SQLite例のコード](../labs/atomic.py) · [製品が求める保存と回復](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/DATA_SCHEMA.md)
-
-写真を取り違えないための要求番号、人の編集を消さないための版番号、次の仕事を忘れないための記録。どれも「何かを待っている間に、別の出来事が起きる」と考えると役割が見えてきます。最後に、別の人から届く依頼を同じようにたどります。
-
-**詳しく読む**　[数値列からWAVを作る例](../lessons/05-capture.md) · [ジョブと写真で状態が変わる時刻の違い](../lessons/07-jobs.md)
-
----
-
-[前へ　4　写真に意味を付ける](meaning.md)　·　[次へ　6　人と人の間で渡す](share.md)
+[前へ　4　データ型と契約](meaning.md)　·　[次へ　6　検索・共有と変更の影響](share.md)

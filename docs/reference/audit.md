@@ -8,7 +8,9 @@
 | docs/full-design-audit | [2075cadc605623e159bca6a204df4ef5df2b6964](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/2075cadc605623e159bca6a204df4ef5df2b6964/docs/PROJECT_DESIGN_AUDIT_AND_COMPLETION_PLAN.md#L617) | 監査・契約草案に「追加合意が必要」とある。こちらのAPI案をmainに転記していない |
 | feat/augmentation-yoshimura | [d64db6cbe0271c768e64d7352e21899f565802ef](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/d64db6cbe0271c768e64d7352e21899f565802ef/src/imagebox/augmentation/service.py) | 旧Ollamaへの呼出関数がある。mainの同名ファイルはGeminiVisionProvider |
 
-11月19日の講義改訂時にも元アプリのmainが同じSHAを指すことを確認しました。概論の画面は、この版をQtの画面表示を模擬するモードで起動し、三つの教材用PNGを登録して取得したものです。
+11月19日の講義改訂時にも元アプリのmainが同じSHAを指すことを確認しました。第2章の画面は、この版をQtの画面表示を模擬するモードで起動し、三つの教材用PNGを登録して取得したものです。
+
+11月19日13時台（JST）の再照合では、上記mainのGitツリーに含まれるPythonファイル38本と[ファイル地図](files.md)の収録パスが一致しました。第3章の保存前後の値は、一時DBを使う[実行例](../labs/handoff.py)で観察しています。
 
 ## 機能の判定
 

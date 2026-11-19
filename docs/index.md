@@ -1,42 +1,37 @@
-# 1　概論｜写真を撮った後に、何をしたいか
+# 1　技術概論｜プログラムはどこで組み立てられるか
 
-放課後、スマホのアルバムに三枚の写真が並んでいます。一枚は黒板に描かれた回路図。一枚は帰りのバスの時刻表。もう一枚は友人との集合写真です。その日はどれを何のために撮ったか覚えています。ところが試験前に「コンデンサの充電を説明していた板書」を探す頃には、撮った日もファイル名も思い出せません。時刻表はもう用済みで、集合写真は何年先も残しておきたい。撮る操作は同じでも、その後の使い道はずいぶん違います。
+`python -m imagebox` でアプリを起動すると、誰がデータベースを開くのでしょう。入口の `main()` はたった数行で、SQLもファイル名も出てきません。そこにあるのは `window = MainWindow()` です。開く先を決めるには、この一行から二つのファイルをたどります。
 
-**Create Engineering F の出発点は、写真を撮った理由が、アルバムに入った途端に見えなくなることです。** この講義では、撮影した人が後で写真を探し出し、必要なら友人に渡せるようにするには、コンピュータに何を覚えてもらえばよいかを考えます。
+## 最初に開く四つのファイル
 
-## 一枚の板書を、翌週まで追ってみる
+下の図では矢印のそばに**実際に渡すもの**を書きました。`src/imagebox/` が本体の起点です。`ui/` には画面に属する処理、`core/` には画面を開かなくても使える型と保存処理があります。
 
-授業の終わり、葵さんが「来週のレポートで使う、充電のグラフ」と言って黒板を撮ります。写真にはグラフが写りますが、「レポートで使う」は写りません。そこで製品の設計では、撮影直前の短い音声を、許可を得て写真に対応付けます。写真とその言葉がそろえば、「回路の板書」という説明に「復習用の資料」という手掛かりを加えられます。逆にマイクが使えない日でも、黒板そのものは残したいですね。この順で考えると、**写真の保存**と**説明を後から付ける仕事**を分ける理由が見えてきます。
+![通常起動の構成。mainが画面を生成し、画面が保存担当を生成する。保存担当は画像ファイルとSQLiteを操作し、画面にはImageRecordの一覧を返す。](figures/overview.svg)
 
-翌週、葵さんは「充電」で写真を探します。同級生の蓮さんもその板書が欲しいのですが、葵さんのアルバムには私的な写真もあります。設計では、蓮さんが欲しい内容を文章で頼み、葵さんの端末で候補を探します。最後に葵さんが選び、承認した写真だけが相手に届きます。「見つかること」と「渡してよいこと」には、それぞれ別の判断が要るわけです。
-
-![製品が目指す流れ。所有者の端末で写真を保存し、説明を付けて探す。友人への送信には所有者の承認を通る。](figures/overview.svg)
-
-## この体験は、なぜ実現できるのか
-
-| したいこと | 最低限、覚えておくもの | それで何ができるか |
+| 読む順 | ファイル | そこで確かめられること |
 |---|---|---|
-| 明日も同じ板書を開く | 写真のファイルと、その保存場所を記した記録 | アプリを閉じても、次に同じ写真を見つけられる |
-| 「充電」で探す | 写真に結び付けた説明や文字起こし | ファイル名に「充電」がなくても、記録に含まれる言葉を照合できる |
-| 用途ごとに整理する | 写真の識別番号と「メモ・資料」などの用途 | 分類を変えるたびに画像を複製せず、一覧の見せ方を変えられる |
-| 特定の友人に渡す | 誰から誰への依頼か、どの写真を承認したかの記録 | 依頼した本人に、承認済みの写真を取り出せるようにできる |
+| 1 | [__main__.py](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/__main__.py#L9-L17) | `main()` がQtアプリとウィンドウを作る。ウィンドウの生成が済んでから表示する |
+| 2 | [ui/main_window.py](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py#L18-L33) | `MainWindow.__init__` の `self.repo = ImageRepository()` が、画面が使う保存担当を決める |
+| 3 | [core/repository.py](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/repository.py#L18-L42) | `ImageRepository.__init__` が保存場所を選び、画像用フォルダとSQLite接続を用意する。接続を保持する変数は `self.conn` |
+| 4 | [core/models.py](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/core/models.py#L16-L28) | `ImageRecord` が一枚分の項目を定める。`original_name` は表示に使う名前、`stored_path` は管理コピーを開くための場所 |
 
-ここでいう「記録」は、たとえば「写真番号17の保存場所はここ、説明は『充電のグラフ』」という一行です。17は説明用の仮番号です。実際のアプリはもっと長い番号を作ります。今は番号の作り方よりも、**写真・説明・用途を同じ一枚のものとして扱うために番号がある**、と捉えてください。
+ここで `self` は「今このメソッドが操作している実体」です。画面の `self.repo` と保存担当の `self.conn` は持ち主が違います。取り込みと再表示で同じデータベースを使えるのは、ウィンドウが最初に作った保存担当をずっと持っているからです。
 
-## 今日のアプリを開くと、どこまで見えるか
+## 同じリポジトリにある、別の実行経路
 
-下は、調査した版のアプリに教材用の三枚を取り込んだ実際の画面です。「分類」タブにはファイル名が並び、初期の分類は三枚とも「その他」です。回路も時刻表も自動では見分けていません。ここまでが、通常起動でそのまま観察できる範囲です。
+次に `core/contracts.py` を開くと、もう一つの `ImageRecord` が見つかります。こちらには `stored_relpath` や `annotation_revision` があります。起動画面がどちらを使っているかは、名前から推測せず、**その値を作るファイルの `import`** で確かめられます。`core/repository.py` の取込元は `imagebox.core.models`、`dev/fakes.py` の取込元は `imagebox.core.contracts` です。
 
-![実際の分類タブ。回路の板書、帰りの時刻表、集合写真という三つのファイル名が、いずれも「その他」として表示されている。](figures/album-window.png)
+| どこから実行するか | 呼び出しが届く先 | 実際に起こること |
+|---|---|---|
+| 通常起動の「画像を取り込む」 | `MainWindow.add_image → ImageRepository.import_file` | 選んだ画像をコピーし、SQLiteへ一行書く |
+| [契約を確かめるテスト](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/tests/test_contract_bootstrap.py#L46-L86) | `FakeRepository.register_capture → _add → enqueue_job` | 画像の寸法を読み、Pythonの辞書に記録とジョブを作る。テスト自身が次の処理を呼ぶ |
+| [Gemini部品の個別起動](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/augmentation/service.py#L96) | `GeminiVisionProvider.annotate → _parse_annotation` | 同意・キーなどの条件がそろえば画像を送信し、応答を一つの `Annotation` にまとめる |
+| [共有の設計](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/sharing/API_DESIGN.md) | `SharingClientPort.approve` などの契約 | 複数枚の承認から受信までの取り決め。通常起動の共有タブにこの経路を呼ぶコードはまだない |
 
-一方、直前の音声を取り出す処理や、画像をAIに渡して説明を受け取る処理には、単独で呼べるコードがあります。開発中には、データを一時的に記憶する代役を使って、保存から分類までの受け渡しも確かめています。この代役を **Fake** と呼びます。通常画面の「付加」「共有」はまだ案内表示で、先ほどの葵さんと蓮さんの体験が丸ごと動く段階には至っていません。[製品が目指す体験](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/docs/PROJECT_SPEC.md) · [現在の画面を組み立てるコード](https://github.com/OsakanaHEAVEN/Create_Engineering_F/blob/e7dbd20b3e581878729673e2cd82ea60719336e4/src/imagebox/ui/main_window.py)
+## この講義でコードを読む順序
 
-## ここからの読み順
+まず[第2章](course/operate.md)で、ウィンドウができてからクリックが関数に届くまでを読みます。[第3章](course/remember.md)では一枚のPNGを使い、同じ写真がパス、Pythonのオブジェクト、SQLの一行、表示用の文字列に姿を変えるところを確かめます。この二章で、通常起動するアプリの呼び出しを端から端までたどれます。
 
-最初に、アプリを閉じても写真が残る仕組みを見ます。その知識があると、ボタンを押したときに「どの記録を増やすのか」が分かります。後半では、その記録に意味を足す方法、処理の順番が前後しても一枚を取り違えない方法、ほかの人に渡す条件の順に進みます。各章は結果まで載せた例で読めます。手元で同じ動きを確かめたいときだけ、章末から実装ノートを開いてください。
+その上で[第4章](course/meaning.md)では新しいデータ型とAIの戻り値、[第5章](course/time.md)では一回の呼び出しで完結しない処理、[第6章](course/share.md)では検索・共有を例に型を変えたときの影響を扱います。ファイル名から探したいときは[全Pythonファイルの地図](reference/files.md)、関数名から探したいときは[関数の読解索引](reference/code.md)を使えます。[調査した版と実装状況](reference/audit.md)
 
-[2　写真を覚える](course/remember.md)　／　[3　ボタンから処理へ](course/operate.md)　／　[4　写真に意味を付ける](course/meaning.md)　／　[5　時間と失敗を扱う](course/time.md)　／　[6　人と人の間で渡す](course/share.md)
-
----
-
-[次へ　2　写真を覚える](course/remember.md)
+[次へ　2　起動とイベント](course/operate.md)

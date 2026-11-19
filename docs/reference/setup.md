@@ -22,6 +22,7 @@ git -C ../CEF-reading switch --detach e7dbd20b3e581878729673e2cd82ea60719336e4
 py -3.12 -m venv .labenv
 .\.labenv\Scripts\python.exe -m pip install -e "../CEF-reading[dev,server]"
 $env:PYTHONPATH = (Resolve-Path ../CEF-reading).Path
+.\.labenv\Scripts\python.exe docs/labs/handoff.py
 .\.labenv\Scripts\python.exe docs/labs/import_trace.py
 .\.labenv\Scripts\python.exe docs/labs/fake_trace.py
 ~~~
@@ -32,6 +33,7 @@ editable installで `src/imagebox` を解決できる。`PYTHONPATH` に本体�
 |---|---|---|
 | [objects.py](../labs/objects.py) | 標準Python | 共有された実体と別々のリスト |
 | [boot.py](../labs/boot.py) | Qtと本体 | 3タブの名前、0件 |
+| [handoff.py](../labs/handoff.py) | 旧Repositoryを二度読む | 同じIDの二つの実体と、保存前後の説明 |
 | [import_trace.py](../labs/import_trace.py) | 本体と実SQLite | `other`、JSONとリスト、`True False None` |
 | [migration.py](../labs/migration.py) | 縮小DB | 版1、IDと説明が残る |
 | [sound.py](../labs/sound.py) | リング実装とwave | 6個と8個の配列、4 Hz・6フレーム |
@@ -53,4 +55,4 @@ $env:IMAGEBOX_DATA_DIR = Join-Path $PWD "study-data"
 
 ---
 
-[次へ　ソース読解索引](code.md)　·　[概論へ](../index.md)
+[次へ　Pythonファイルの地図](files.md)　·　[概論へ](../index.md)
